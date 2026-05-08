@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.0] — 2026-05-08
+
+### Changed
+
+#### Backend
+- All Doctrine repository queries migrated from DQL to QueryBuilder (`DoctrineDeliveryAttemptRepository`, `DoctrineEndpointRepository`, `DoctrineEventEndpointDeliveryRepository`, `DoctrineEventRepository`, `DoctrinePlanRepository`, `DoctrineRequestUsageRepository`, `DoctrineSourceRepository`, `DoctrineUserRepository`)
+- ORM relationship attributes applied directly on all entities (`DeliveryAttempt`, `Endpoint`, `Event`, `EventEndpointDelivery`, `Plan`, `RequestUsage`, `Source`, `User`) replacing legacy XML/YAML mapping
+
+### Fixed
+
+- PHPUnit deprecation notices in use case tests (`AddEndpointUseCase`, `DeleteEndpointUseCase`, `ListEndpointsUseCase`, `EventStatusRecomputation`, `GetEventDetailUseCase`, `ListEventsUseCase`)
+
+---
+
 ## [0.2.0] — 2026-05-07
 
 ### Added
