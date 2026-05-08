@@ -68,6 +68,7 @@ final class GetEventDetailUseCaseTest extends TestCase
             ->willReturn($event);
 
         $this->sourceRepository
+            ->expects($this->once())
             ->method('findById')
             ->with('source-id', 'other-user-id')
             ->willReturn(null);
@@ -87,6 +88,7 @@ final class GetEventDetailUseCaseTest extends TestCase
             ->willReturn($event);
 
         $this->sourceRepository
+            ->expects($this->once())
             ->method('findById')
             ->with('source-id', 'user-id')
             ->willReturn($this->createStub(Source::class));

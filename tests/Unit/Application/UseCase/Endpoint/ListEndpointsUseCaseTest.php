@@ -36,6 +36,7 @@ final class ListEndpointsUseCaseTest extends TestCase
         ];
 
         $this->sourceRepository
+            ->expects($this->once())
             ->method('findById')
             ->with('source-id', 'user-id')
             ->willReturn($this->createStub(Source::class));
@@ -71,6 +72,7 @@ final class ListEndpointsUseCaseTest extends TestCase
     public function testExecuteThrowsWhenSourceNotOwned(): void
     {
         $this->sourceRepository
+            ->expects($this->once())
             ->method('findById')
             ->willReturn(null);
 

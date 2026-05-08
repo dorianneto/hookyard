@@ -31,6 +31,7 @@ final class AddEndpointUseCaseTest extends TestCase
     public function testExecuteSavesEndpointWithCorrectData(): void
     {
         $this->sourceRepository
+            ->expects($this->once())
             ->method('findById')
             ->with('source-id', 'user-id')
             ->willReturn($this->createStub(Source::class));
@@ -64,6 +65,7 @@ final class AddEndpointUseCaseTest extends TestCase
     public function testExecuteThrowsWhenSourceNotOwned(): void
     {
         $this->sourceRepository
+            ->expects($this->once())
             ->method('findById')
             ->willReturn(null);
 
@@ -77,6 +79,7 @@ final class AddEndpointUseCaseTest extends TestCase
     public function testExecuteThrowsOnInvalidUrl(): void
     {
         $this->sourceRepository
+            ->expects($this->once())
             ->method('findById')
             ->willReturn($this->createStub(Source::class));
 

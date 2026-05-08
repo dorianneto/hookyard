@@ -102,16 +102,18 @@ final class EventStatusRecomputationTest extends TestCase
             ->method('execute')
             ->willReturnCallback(static function (callable $op): void {});
 
-        $this->endpointRepository->method('findById')->willReturn(
+        $this->endpointRepository->expects($this->once())->method('findById')->willReturn(
             new Endpoint('endpoint-1', 'source-1', 'https://example.com/hook', new \DateTimeImmutable())
         );
-        $this->eventRepository->method('findById')->willReturn(
+        $this->eventRepository->expects($this->once())->method('findById')->willReturn(
             new Event('event-1', 'source-1', 'POST', [], '{}', EventStatus::Pending, new \DateTimeImmutable())
         );
-        $this->deliveryRepository->method('findByEventAndEndpoint')->willReturn(
+        $this->deliveryRepository->expects($this->once())->method('findByEventAndEndpoint')->willReturn(
             new EventEndpointDelivery('d1', 'event-1', 'endpoint-1', EventStatus::Pending, new \DateTimeImmutable(), new \DateTimeImmutable())
         );
-        $this->httpDelivery->method('deliver')->willReturn(new DeliveryResult(200, 'OK', 50, true));
+        $this->httpDelivery->expects($this->once())->method('deliver')->willReturn(new DeliveryResult(200, 'OK', 50, true));
+        $this->attemptRepository->expects($this->once())->method('save');
+        $this->queue->expects($this->never())->method('enqueue');
 
         $this->deliveryRepository->expects($this->never())->method('updateStatus');
         $this->eventRepository->expects($this->never())->method('updateStatus');
