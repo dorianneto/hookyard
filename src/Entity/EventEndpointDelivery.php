@@ -20,11 +20,13 @@ class EventEndpointDelivery
     #[ORM\GeneratedValue(strategy: 'NONE')]
     private string $id;
 
-    #[ORM\Column(name: 'event_id', type: Types::STRING)]
-    private string $eventId;
+    #[ORM\ManyToOne(targetEntity: Event::class)]
+    #[ORM\JoinColumn(name: 'event_id', referencedColumnName: 'id', nullable: false)]
+    private Event $event;
 
-    #[ORM\Column(name: 'endpoint_id', type: Types::STRING)]
-    private string $endpointId;
+    #[ORM\ManyToOne(targetEntity: Endpoint::class)]
+    #[ORM\JoinColumn(name: 'endpoint_id', referencedColumnName: 'id', nullable: false)]
+    private Endpoint $endpoint;
 
     #[ORM\Column(type: Types::STRING, enumType: EventStatus::class)]
     private EventStatus $status;
@@ -37,26 +39,26 @@ class EventEndpointDelivery
 
     public function __construct(
         string $id,
-        string $eventId,
-        string $endpointId,
+        Event $event,
+        Endpoint $endpoint,
         EventStatus $status,
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
     ) {
         $this->id = $id;
-        $this->eventId = $eventId;
-        $this->endpointId = $endpointId;
+        $this->event = $event;
+        $this->endpoint = $endpoint;
         $this->status = $status;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
     }
 
-    public static function fromDomain(DomainEventEndpointDelivery $delivery): self
+    public static function fromDomain(DomainEventEndpointDelivery $delivery, Event $event, Endpoint $endpoint): self
     {
         return new self(
             $delivery->getId(),
-            $delivery->getEventId(),
-            $delivery->getEndpointId(),
+            $event,
+            $endpoint,
             $delivery->getStatus(),
             $delivery->getCreatedAt(),
             $delivery->getUpdatedAt(),
@@ -73,8 +75,8 @@ class EventEndpointDelivery
     {
         return new DomainEventEndpointDelivery(
             $this->id,
-            $this->eventId,
-            $this->endpointId,
+            $this->event->getId(),
+            $this->endpoint->getId(),
             $this->status,
             $this->createdAt,
             $this->updatedAt,

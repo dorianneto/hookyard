@@ -19,8 +19,9 @@ class Event
     #[ORM\GeneratedValue(strategy: 'NONE')]
     private string $id;
 
-    #[ORM\Column(name: 'source_id', type: Types::STRING)]
-    private string $sourceId;
+    #[ORM\ManyToOne(targetEntity: Source::class)]
+    #[ORM\JoinColumn(name: 'source_id', referencedColumnName: 'id', nullable: false)]
+    private Source $source;
 
     #[ORM\Column(type: Types::STRING)]
     private string $method;
@@ -39,7 +40,7 @@ class Event
 
     public function __construct(
         string $id,
-        string $sourceId,
+        Source $source,
         string $method,
         array $headers,
         string $body,
@@ -47,7 +48,7 @@ class Event
         \DateTimeImmutable $receivedAt,
     ) {
         $this->id = $id;
-        $this->sourceId = $sourceId;
+        $this->source = $source;
         $this->method = $method;
         $this->headers = $headers;
         $this->body = $body;
@@ -55,17 +56,22 @@ class Event
         $this->receivedAt = $receivedAt;
     }
 
-    public static function fromDomain(DomainEvent $event): self
+    public static function fromDomain(DomainEvent $event, Source $source): self
     {
         return new self(
             $event->getId(),
-            $event->getSourceId(),
+            $source,
             $event->getMethod(),
             $event->getHeaders(),
             $event->getBody(),
             $event->getStatus(),
             $event->getReceivedAt(),
         );
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
     }
 
     public function setStatus(EventStatus $status): void
@@ -77,7 +83,7 @@ class Event
     {
         return new DomainEvent(
             $this->id,
-            $this->sourceId,
+            $this->source->getId(),
             $this->method,
             $this->headers,
             $this->body,

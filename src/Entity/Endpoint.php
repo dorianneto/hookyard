@@ -17,8 +17,9 @@ class Endpoint
     #[ORM\GeneratedValue(strategy: 'NONE')]
     private string $id;
 
-    #[ORM\Column(name: 'source_id', type: Types::STRING)]
-    private string $sourceId;
+    #[ORM\ManyToOne(targetEntity: Source::class)]
+    #[ORM\JoinColumn(name: 'source_id', referencedColumnName: 'id', nullable: false)]
+    private Source $source;
 
     #[ORM\Column(type: Types::STRING)]
     private string $url;
@@ -28,21 +29,26 @@ class Endpoint
 
     public function __construct(
         string $id,
-        string $sourceId,
+        Source $source,
         string $url,
         \DateTimeImmutable $createdAt,
     ) {
         $this->id = $id;
-        $this->sourceId = $sourceId;
+        $this->source = $source;
         $this->url = $url;
         $this->createdAt = $createdAt;
     }
 
-    public static function fromDomain(DomainEndpoint $endpoint): self
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    public static function fromDomain(DomainEndpoint $endpoint, Source $source): self
     {
         return new self(
             $endpoint->getId(),
-            $endpoint->getSourceId(),
+            $source,
             $endpoint->getUrl(),
             $endpoint->getCreatedAt(),
         );
@@ -52,7 +58,7 @@ class Endpoint
     {
         return new DomainEndpoint(
             $this->id,
-            $this->sourceId,
+            $this->source->getId(),
             $this->url,
             $this->createdAt,
         );

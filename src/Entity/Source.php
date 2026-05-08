@@ -17,8 +17,9 @@ class Source
     #[ORM\GeneratedValue(strategy: 'NONE')]
     private string $id;
 
-    #[ORM\Column(name: 'user_id', type: Types::STRING)]
-    private string $userId;
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    private User $user;
 
     #[ORM\Column(type: Types::STRING)]
     private string $name;
@@ -31,23 +32,28 @@ class Source
 
     public function __construct(
         string $id,
-        string $userId,
+        User $user,
         string $name,
         string $inboundUuid,
         \DateTimeImmutable $createdAt,
     ) {
         $this->id = $id;
-        $this->userId = $userId;
+        $this->user = $user;
         $this->name = $name;
         $this->inboundUuid = $inboundUuid;
         $this->createdAt = $createdAt;
     }
 
-    public static function fromDomain(DomainSource $source): self
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    public static function fromDomain(DomainSource $source, User $user): self
     {
         return new self(
             $source->getId(),
-            $source->getUserId(),
+            $user,
             $source->getName(),
             $source->getInboundUuid(),
             $source->getCreatedAt(),
@@ -58,7 +64,7 @@ class Source
     {
         return new DomainSource(
             $this->id,
-            $this->userId,
+            $this->user->getId(),
             $this->name,
             $this->inboundUuid,
             $this->createdAt,

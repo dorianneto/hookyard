@@ -18,11 +18,13 @@ class DeliveryAttempt
     #[ORM\GeneratedValue(strategy: 'NONE')]
     private string $id;
 
-    #[ORM\Column(name: 'event_id', type: Types::STRING)]
-    private string $eventId;
+    #[ORM\ManyToOne(targetEntity: Event::class)]
+    #[ORM\JoinColumn(name: 'event_id', referencedColumnName: 'id', nullable: false)]
+    private Event $event;
 
-    #[ORM\Column(name: 'endpoint_id', type: Types::STRING)]
-    private string $endpointId;
+    #[ORM\ManyToOne(targetEntity: Endpoint::class)]
+    #[ORM\JoinColumn(name: 'endpoint_id', referencedColumnName: 'id', nullable: false)]
+    private Endpoint $endpoint;
 
     #[ORM\Column(name: 'attempt_number', type: Types::INTEGER)]
     private int $attemptNumber;
@@ -41,8 +43,8 @@ class DeliveryAttempt
 
     public function __construct(
         string $id,
-        string $eventId,
-        string $endpointId,
+        Event $event,
+        Endpoint $endpoint,
         int $attemptNumber,
         ?int $statusCode,
         string $responseBody,
@@ -50,8 +52,8 @@ class DeliveryAttempt
         \DateTimeImmutable $attemptedAt,
     ) {
         $this->id = $id;
-        $this->eventId = $eventId;
-        $this->endpointId = $endpointId;
+        $this->event = $event;
+        $this->endpoint = $endpoint;
         $this->attemptNumber = $attemptNumber;
         $this->statusCode = $statusCode;
         $this->responseBody = $responseBody;
@@ -59,12 +61,12 @@ class DeliveryAttempt
         $this->attemptedAt = $attemptedAt;
     }
 
-    public static function fromDomain(DomainDeliveryAttempt $attempt): self
+    public static function fromDomain(DomainDeliveryAttempt $attempt, Event $event, Endpoint $endpoint): self
     {
         return new self(
             $attempt->getId(),
-            $attempt->getEventId(),
-            $attempt->getEndpointId(),
+            $event,
+            $endpoint,
             $attempt->getAttemptNumber(),
             $attempt->getStatusCode(),
             $attempt->getResponseBody(),
@@ -77,8 +79,8 @@ class DeliveryAttempt
     {
         return new DomainDeliveryAttempt(
             $this->id,
-            $this->eventId,
-            $this->endpointId,
+            $this->event->getId(),
+            $this->endpoint->getId(),
             $this->attemptNumber,
             $this->statusCode,
             $this->responseBody,

@@ -7,6 +7,8 @@ namespace App\Infrastructure\Persistence;
 use App\Application\Port\EventEndpointDeliveryRepositoryPort;
 use App\Domain\EventEndpointDelivery as DomainDelivery;
 use App\Domain\EventStatus;
+use App\Entity\Endpoint as EndpointEntity;
+use App\Entity\Event as EventEntity;
 use App\Entity\EventEndpointDelivery as DeliveryEntity;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -18,7 +20,9 @@ final class DoctrineEventEndpointDeliveryRepository implements EventEndpointDeli
 
     public function save(DomainDelivery $delivery): void
     {
-        $entity = DeliveryEntity::fromDomain($delivery);
+        $event = $this->entityManager->getReference(EventEntity::class, $delivery->getEventId());
+        $endpoint = $this->entityManager->getReference(EndpointEntity::class, $delivery->getEndpointId());
+        $entity = DeliveryEntity::fromDomain($delivery, $event, $endpoint);
         $this->entityManager->persist($entity);
         $this->entityManager->flush();
     }
@@ -27,7 +31,7 @@ final class DoctrineEventEndpointDeliveryRepository implements EventEndpointDeli
     {
         $entity = $this->entityManager
             ->getRepository(DeliveryEntity::class)
-            ->findOneBy(['eventId' => $eventId, 'endpointId' => $endpointId]);
+            ->findOneBy(['event' => $eventId, 'endpoint' => $endpointId]);
 
         return $entity?->toDomain();
     }
@@ -51,7 +55,7 @@ final class DoctrineEventEndpointDeliveryRepository implements EventEndpointDeli
     {
         $entities = $this->entityManager
             ->getRepository(DeliveryEntity::class)
-            ->findBy(['eventId' => $eventId]);
+            ->findBy(['event' => $eventId]);
 
         return array_map(static fn(DeliveryEntity $e) => $e->toDomain(), $entities);
     }

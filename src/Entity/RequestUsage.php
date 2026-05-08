@@ -17,8 +17,9 @@ class RequestUsage
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private int $id;
 
-    #[ORM\Column(name: 'user_id', type: Types::STRING)]
-    private string $userId;
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    private User $user;
 
     #[ORM\Column(name: 'bucket_date', type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $bucketDate;
@@ -27,11 +28,11 @@ class RequestUsage
     private int $count;
 
     public function __construct(
-        string $userId,
+        User $user,
         \DateTimeImmutable $bucketDate,
         int $count = 0,
     ) {
-        $this->userId = $userId;
+        $this->user = $user;
         $this->bucketDate = $bucketDate;
         $this->count = $count;
     }
@@ -43,7 +44,7 @@ class RequestUsage
 
     public function getUserId(): string
     {
-        return $this->userId;
+        return $this->user->getId();
     }
 
     public function getBucketDate(): \DateTimeImmutable

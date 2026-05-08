@@ -33,8 +33,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(name: 'plan_id', type: Types::STRING, nullable: true)]
-    private ?string $planId = null;
+    #[ORM\ManyToOne(targetEntity: Plan::class)]
+    #[ORM\JoinColumn(name: 'plan_id', referencedColumnName: 'id', nullable: true)]
+    private ?Plan $plan = null;
 
     public function __construct(
         string $id,
@@ -42,14 +43,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
         string $passwordHash,
         \DateTimeImmutable $createdAt,
         ?string $name = null,
-        ?string $planId = null,
+        ?Plan $plan = null,
     ) {
         $this->id = $id;
         $this->email = $email;
         $this->passwordHash = $passwordHash;
         $this->createdAt = $createdAt;
-        $this->name = $name ?? null;
-        $this->planId = $planId;
+        $this->name = $name;
+        $this->plan = $plan;
     }
 
     public function getId(): string
@@ -74,12 +75,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     public function getPlanId(): ?string
     {
-        return $this->planId;
+        return $this->plan?->getId();
     }
 
-    public function setPlanId(?string $planId): void
+    public function setPlan(?Plan $plan): void
     {
-        $this->planId = $planId;
+        $this->plan = $plan;
     }
 
     // --- UserInterface ---
@@ -125,15 +126,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     // --- Mapping helpers ---
 
-    public static function fromDomain(DomainUser $user): self
+    public static function fromDomain(DomainUser $user, ?Plan $plan = null): self
     {
         return new self(
             $user->getId(),
             $user->getEmail(),
             $user->getPasswordHash(),
             $user->getCreatedAt(),
-            $user->getName() ?? null,
-            $user->getPlanId(),
+            $user->getName(),
+            $plan,
         );
     }
 
@@ -144,8 +145,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
             $this->email,
             $this->passwordHash,
             $this->createdAt,
-            $this->name ?? null,
-            $this->planId,
+            $this->name,
+            $this->plan?->getId(),
         );
     }
 }

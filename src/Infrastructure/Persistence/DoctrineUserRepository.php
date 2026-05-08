@@ -6,6 +6,7 @@ namespace App\Infrastructure\Persistence;
 
 use App\Application\Port\UserRepositoryPort;
 use App\Domain\User as DomainUser;
+use App\Entity\Plan as PlanEntity;
 use App\Entity\User as UserEntity;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -23,7 +24,10 @@ final class DoctrineUserRepository implements UserRepositoryPort
             $existing->setName($user->getName());
             $existing->setPasswordHash($user->getPasswordHash());
         } else {
-            $entity = UserEntity::fromDomain($user);
+            $plan = $user->getPlanId() !== null
+                ? $this->entityManager->getReference(PlanEntity::class, $user->getPlanId())
+                : null;
+            $entity = UserEntity::fromDomain($user, $plan);
             $this->entityManager->persist($entity);
         }
 

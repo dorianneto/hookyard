@@ -38,6 +38,11 @@ class Plan
         $this->createdAt = $createdAt;
     }
 
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
     public function toDomain(): DomainPlan
     {
         return new DomainPlan(

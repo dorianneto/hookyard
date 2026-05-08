@@ -8,6 +8,7 @@ use App\Application\Port\SourceRepositoryPort;
 use App\Domain\Exception\SourceNotFoundException;
 use App\Domain\Source as DomainSource;
 use App\Entity\Source as SourceEntity;
+use App\Entity\User as UserEntity;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class DoctrineSourceRepository implements SourceRepositoryPort
@@ -18,7 +19,8 @@ final class DoctrineSourceRepository implements SourceRepositoryPort
 
     public function save(DomainSource $source): void
     {
-        $entity = SourceEntity::fromDomain($source);
+        $user = $this->entityManager->getReference(UserEntity::class, $source->getUserId());
+        $entity = SourceEntity::fromDomain($source, $user);
         $this->entityManager->persist($entity);
         $this->entityManager->flush();
     }
@@ -27,7 +29,7 @@ final class DoctrineSourceRepository implements SourceRepositoryPort
     {
         $entity = $this->entityManager
             ->getRepository(SourceEntity::class)
-            ->findOneBy(['id' => $id, 'userId' => $userId]);
+            ->findOneBy(['id' => $id, 'user' => $userId]);
 
         return $entity?->toDomain();
     }
@@ -37,7 +39,7 @@ final class DoctrineSourceRepository implements SourceRepositoryPort
     {
         $entities = $this->entityManager
             ->getRepository(SourceEntity::class)
-            ->findBy(['userId' => $userId]);
+            ->findBy(['user' => $userId]);
 
         return array_map(static fn(SourceEntity $e) => $e->toDomain(), $entities);
     }
@@ -55,7 +57,7 @@ final class DoctrineSourceRepository implements SourceRepositoryPort
     {
         $entity = $this->entityManager
             ->getRepository(SourceEntity::class)
-            ->findOneBy(['id' => $id, 'userId' => $userId]);
+            ->findOneBy(['id' => $id, 'user' => $userId]);
 
         if ($entity === null) {
             throw new SourceNotFoundException('Source not found.');

@@ -7,6 +7,8 @@ namespace App\Infrastructure\Persistence;
 use App\Application\Port\DeliveryAttemptRepositoryPort;
 use App\Domain\DeliveryAttempt as DomainDeliveryAttempt;
 use App\Entity\DeliveryAttempt as DeliveryAttemptEntity;
+use App\Entity\Endpoint as EndpointEntity;
+use App\Entity\Event as EventEntity;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class DoctrineDeliveryAttemptRepository implements DeliveryAttemptRepositoryPort
@@ -17,7 +19,9 @@ final class DoctrineDeliveryAttemptRepository implements DeliveryAttemptReposito
 
     public function save(DomainDeliveryAttempt $attempt): void
     {
-        $entity = DeliveryAttemptEntity::fromDomain($attempt);
+        $event = $this->entityManager->getReference(EventEntity::class, $attempt->getEventId());
+        $endpoint = $this->entityManager->getReference(EndpointEntity::class, $attempt->getEndpointId());
+        $entity = DeliveryAttemptEntity::fromDomain($attempt, $event, $endpoint);
         $this->entityManager->persist($entity);
         $this->entityManager->flush();
     }
@@ -27,7 +31,7 @@ final class DoctrineDeliveryAttemptRepository implements DeliveryAttemptReposito
         return count(
             $this->entityManager
                 ->getRepository(DeliveryAttemptEntity::class)
-                ->findBy(['eventId' => $eventId, 'endpointId' => $endpointId])
+                ->findBy(['event' => $eventId, 'endpoint' => $endpointId])
         );
     }
 
@@ -36,7 +40,7 @@ final class DoctrineDeliveryAttemptRepository implements DeliveryAttemptReposito
     {
         $entities = $this->entityManager
             ->getRepository(DeliveryAttemptEntity::class)
-            ->findBy(['eventId' => $eventId, 'endpointId' => $endpointId], ['attemptNumber' => 'ASC']);
+            ->findBy(['event' => $eventId, 'endpoint' => $endpointId], ['attemptNumber' => 'ASC']);
 
         return array_map(static fn(DeliveryAttemptEntity $e) => $e->toDomain(), $entities);
     }

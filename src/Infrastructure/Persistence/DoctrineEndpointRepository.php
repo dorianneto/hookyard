@@ -8,6 +8,7 @@ use App\Application\Port\EndpointRepositoryPort;
 use App\Domain\Endpoint as DomainEndpoint;
 use App\Domain\Exception\EndpointNotFoundException;
 use App\Entity\Endpoint as EndpointEntity;
+use App\Entity\Source as SourceEntity;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class DoctrineEndpointRepository implements EndpointRepositoryPort
@@ -18,7 +19,8 @@ final class DoctrineEndpointRepository implements EndpointRepositoryPort
 
     public function save(DomainEndpoint $endpoint): void
     {
-        $entity = EndpointEntity::fromDomain($endpoint);
+        $source = $this->entityManager->getReference(SourceEntity::class, $endpoint->getSourceId());
+        $entity = EndpointEntity::fromDomain($endpoint, $source);
         $this->entityManager->persist($entity);
         $this->entityManager->flush();
     }
@@ -37,7 +39,7 @@ final class DoctrineEndpointRepository implements EndpointRepositoryPort
     {
         $entities = $this->entityManager
             ->getRepository(EndpointEntity::class)
-            ->findBy(['sourceId' => $sourceId]);
+            ->findBy(['source' => $sourceId]);
 
         return array_map(static fn(EndpointEntity $e) => $e->toDomain(), $entities);
     }

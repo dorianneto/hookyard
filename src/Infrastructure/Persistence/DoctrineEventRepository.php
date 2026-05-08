@@ -8,6 +8,7 @@ use App\Application\Port\EventRepositoryPort;
 use App\Domain\Event as DomainEvent;
 use App\Domain\EventStatus;
 use App\Entity\Event as EventEntity;
+use App\Entity\Source as SourceEntity;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class DoctrineEventRepository implements EventRepositoryPort
@@ -18,7 +19,8 @@ final class DoctrineEventRepository implements EventRepositoryPort
 
     public function save(DomainEvent $event): void
     {
-        $entity = EventEntity::fromDomain($event);
+        $source = $this->entityManager->getReference(SourceEntity::class, $event->getSourceId());
+        $entity = EventEntity::fromDomain($event, $source);
         $this->entityManager->persist($entity);
         $this->entityManager->flush();
     }
@@ -37,7 +39,7 @@ final class DoctrineEventRepository implements EventRepositoryPort
     {
         $entities = $this->entityManager
             ->getRepository(EventEntity::class)
-            ->findBy(['sourceId' => $sourceId], ['receivedAt' => 'DESC'], $limit);
+            ->findBy(['source' => $sourceId], ['receivedAt' => 'DESC'], $limit);
 
         return array_map(static fn(EventEntity $e) => $e->toDomain(), $entities);
     }
@@ -45,7 +47,7 @@ final class DoctrineEventRepository implements EventRepositoryPort
     public function deleteByEndpointId(string $endpointId): void
     {
         $eventIds = $this->entityManager
-            ->createQuery('SELECT eed.eventId FROM App\Entity\EventEndpointDelivery eed WHERE eed.endpointId = :endpointId')
+            ->createQuery('SELECT IDENTITY(eed.event) FROM App\Entity\EventEndpointDelivery eed WHERE eed.endpoint = :endpointId')
             ->setParameter('endpointId', $endpointId)
             ->getSingleColumnResult();
 
