@@ -5,24 +5,31 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence;
 
 use App\Application\Port\RequestUsageRepositoryPort;
+use App\Entity\RequestUsage as RequestUsageEntity;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 
 final class DoctrineRequestUsageRepository implements RequestUsageRepositoryPort
 {
     public function __construct(
+        private readonly EntityManagerInterface $entityManager,
         private readonly Connection $connection,
     ) {}
 
     public function sumRolling30Days(string $userId): int
     {
-        $result = $this->connection->fetchOne(
-            'SELECT COALESCE(SUM(count), 0)
-             FROM request_usage
-             WHERE user_id = :userId
-               AND bucket_date >= CURRENT_DATE - 29',
-            ['userId' => $userId],
-        );
+        $cutoff = new DateTimeImmutable('-29 days');
+
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('COALESCE(SUM(ru.count), 0)')
+            ->from(RequestUsageEntity::class, 'ru')
+            ->where('ru.user = :userId')
+            ->andWhere('ru.bucketDate >= :cutoff')
+            ->setParameter('userId', $userId)
+            ->setParameter('cutoff', $cutoff)
+            ->getQuery()
+            ->getSingleScalarResult();
 
         return (int) $result;
     }
@@ -39,9 +46,11 @@ final class DoctrineRequestUsageRepository implements RequestUsageRepositoryPort
 
     public function deleteOlderThan(DateTimeImmutable $before): int
     {
-        return $this->connection->executeStatement(
-            'DELETE FROM request_usage WHERE bucket_date < :before',
-            ['before' => $before->format('Y-m-d')],
-        );
+        return (int) $this->entityManager->createQueryBuilder()
+            ->delete(RequestUsageEntity::class, 'ru')
+            ->where('ru.bucketDate < :before')
+            ->setParameter('before', $before)
+            ->getQuery()
+            ->execute();
     }
 }

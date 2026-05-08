@@ -29,18 +29,28 @@ final class DoctrineEventEndpointDeliveryRepository implements EventEndpointDeli
 
     public function findByEventAndEndpoint(string $eventId, string $endpointId): ?DomainDelivery
     {
-        $entity = $this->entityManager
-            ->getRepository(DeliveryEntity::class)
-            ->findOneBy(['event' => $eventId, 'endpoint' => $endpointId]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('eed')
+            ->from(DeliveryEntity::class, 'eed')
+            ->where('eed.event = :eventId')
+            ->andWhere('eed.endpoint = :endpointId')
+            ->setParameter('eventId', $eventId)
+            ->setParameter('endpointId', $endpointId)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $entity?->toDomain();
     }
 
     public function updateStatus(string $id, EventStatus $status): void
     {
-        $entity = $this->entityManager
-            ->getRepository(DeliveryEntity::class)
-            ->findOneBy(['id' => $id]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('eed')
+            ->from(DeliveryEntity::class, 'eed')
+            ->where('eed.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         if ($entity === null) {
             return;
@@ -53,9 +63,13 @@ final class DoctrineEventEndpointDeliveryRepository implements EventEndpointDeli
     /** @return DomainDelivery[] */
     public function findAllByEvent(string $eventId): array
     {
-        $entities = $this->entityManager
-            ->getRepository(DeliveryEntity::class)
-            ->findBy(['event' => $eventId]);
+        $entities = $this->entityManager->createQueryBuilder()
+            ->select('eed')
+            ->from(DeliveryEntity::class, 'eed')
+            ->where('eed.event = :eventId')
+            ->setParameter('eventId', $eventId)
+            ->getQuery()
+            ->getResult();
 
         return array_map(static fn(DeliveryEntity $e) => $e->toDomain(), $entities);
     }

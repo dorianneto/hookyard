@@ -8,6 +8,7 @@ use App\Application\Port\EventRepositoryPort;
 use App\Domain\Event as DomainEvent;
 use App\Domain\EventStatus;
 use App\Entity\Event as EventEntity;
+use App\Entity\EventEndpointDelivery as EventEndpointDeliveryEntity;
 use App\Entity\Source as SourceEntity;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -27,9 +28,13 @@ final class DoctrineEventRepository implements EventRepositoryPort
 
     public function findById(string $id): ?DomainEvent
     {
-        $entity = $this->entityManager
-            ->getRepository(EventEntity::class)
-            ->findOneBy(['id' => $id]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('e')
+            ->from(EventEntity::class, 'e')
+            ->where('e.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $entity?->toDomain();
     }
@@ -37,35 +42,50 @@ final class DoctrineEventRepository implements EventRepositoryPort
     /** @return DomainEvent[] */
     public function findRecentBySource(string $sourceId, int $limit): array
     {
-        $entities = $this->entityManager
-            ->getRepository(EventEntity::class)
-            ->findBy(['source' => $sourceId], ['receivedAt' => 'DESC'], $limit);
+        $entities = $this->entityManager->createQueryBuilder()
+            ->select('e')
+            ->from(EventEntity::class, 'e')
+            ->where('e.source = :sourceId')
+            ->setParameter('sourceId', $sourceId)
+            ->orderBy('e.receivedAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
 
         return array_map(static fn(EventEntity $e) => $e->toDomain(), $entities);
     }
 
     public function deleteByEndpointId(string $endpointId): void
     {
-        $eventIds = $this->entityManager
-            ->createQuery('SELECT IDENTITY(eed.event) FROM App\Entity\EventEndpointDelivery eed WHERE eed.endpoint = :endpointId')
+        $eventIds = $this->entityManager->createQueryBuilder()
+            ->select('IDENTITY(eed.event)')
+            ->from(EventEndpointDeliveryEntity::class, 'eed')
+            ->where('eed.endpoint = :endpointId')
             ->setParameter('endpointId', $endpointId)
+            ->getQuery()
             ->getSingleColumnResult();
 
         if ($eventIds === []) {
             return;
         }
 
-        $this->entityManager
-            ->createQuery('DELETE FROM App\Entity\Event e WHERE e.id IN (:eventIds)')
+        $this->entityManager->createQueryBuilder()
+            ->delete(EventEntity::class, 'e')
+            ->where('e.id IN (:eventIds)')
             ->setParameter('eventIds', $eventIds)
+            ->getQuery()
             ->execute();
     }
 
     public function updateStatus(string $id, EventStatus $status): void
     {
-        $entity = $this->entityManager
-            ->getRepository(EventEntity::class)
-            ->findOneBy(['id' => $id]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('e')
+            ->from(EventEntity::class, 'e')
+            ->where('e.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         if ($entity === null) {
             return;

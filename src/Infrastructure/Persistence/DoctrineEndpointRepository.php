@@ -27,9 +27,13 @@ final class DoctrineEndpointRepository implements EndpointRepositoryPort
 
     public function findById(string $id): ?DomainEndpoint
     {
-        $entity = $this->entityManager
-            ->getRepository(EndpointEntity::class)
-            ->findOneBy(['id' => $id]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('ep')
+            ->from(EndpointEntity::class, 'ep')
+            ->where('ep.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $entity?->toDomain();
     }
@@ -37,9 +41,13 @@ final class DoctrineEndpointRepository implements EndpointRepositoryPort
     /** @return DomainEndpoint[] */
     public function findAllBySource(string $sourceId): array
     {
-        $entities = $this->entityManager
-            ->getRepository(EndpointEntity::class)
-            ->findBy(['source' => $sourceId]);
+        $entities = $this->entityManager->createQueryBuilder()
+            ->select('ep')
+            ->from(EndpointEntity::class, 'ep')
+            ->where('ep.source = :sourceId')
+            ->setParameter('sourceId', $sourceId)
+            ->getQuery()
+            ->getResult();
 
         return array_map(static fn(EndpointEntity $e) => $e->toDomain(), $entities);
     }
@@ -52,9 +60,13 @@ final class DoctrineEndpointRepository implements EndpointRepositoryPort
 
     public function delete(string $id): void
     {
-        $entity = $this->entityManager
-            ->getRepository(EndpointEntity::class)
-            ->findOneBy(['id' => $id]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('ep')
+            ->from(EndpointEntity::class, 'ep')
+            ->where('ep.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         if ($entity === null) {
             throw new EndpointNotFoundException('Endpoint not found.');

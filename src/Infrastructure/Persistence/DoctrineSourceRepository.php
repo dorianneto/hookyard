@@ -27,9 +27,15 @@ final class DoctrineSourceRepository implements SourceRepositoryPort
 
     public function findById(string $id, string $userId): ?DomainSource
     {
-        $entity = $this->entityManager
-            ->getRepository(SourceEntity::class)
-            ->findOneBy(['id' => $id, 'user' => $userId]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('s')
+            ->from(SourceEntity::class, 's')
+            ->where('s.id = :id')
+            ->andWhere('s.user = :userId')
+            ->setParameter('id', $id)
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $entity?->toDomain();
     }
@@ -37,27 +43,41 @@ final class DoctrineSourceRepository implements SourceRepositoryPort
     /** @return DomainSource[] */
     public function findAllByUser(string $userId): array
     {
-        $entities = $this->entityManager
-            ->getRepository(SourceEntity::class)
-            ->findBy(['user' => $userId]);
+        $entities = $this->entityManager->createQueryBuilder()
+            ->select('s')
+            ->from(SourceEntity::class, 's')
+            ->where('s.user = :userId')
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getResult();
 
         return array_map(static fn(SourceEntity $e) => $e->toDomain(), $entities);
     }
 
     public function findByInboundUuid(string $inboundUuid): ?DomainSource
     {
-        $entity = $this->entityManager
-            ->getRepository(SourceEntity::class)
-            ->findOneBy(['inboundUuid' => $inboundUuid]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('s')
+            ->from(SourceEntity::class, 's')
+            ->where('s.inboundUuid = :inboundUuid')
+            ->setParameter('inboundUuid', $inboundUuid)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $entity?->toDomain();
     }
 
     public function delete(string $id, string $userId): void
     {
-        $entity = $this->entityManager
-            ->getRepository(SourceEntity::class)
-            ->findOneBy(['id' => $id, 'user' => $userId]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('s')
+            ->from(SourceEntity::class, 's')
+            ->where('s.id = :id')
+            ->andWhere('s.user = :userId')
+            ->setParameter('id', $id)
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         if ($entity === null) {
             throw new SourceNotFoundException('Source not found.');

@@ -18,7 +18,13 @@ final class DoctrineUserRepository implements UserRepositoryPort
 
     public function save(DomainUser $user): void
     {
-        $existing = $this->entityManager->getRepository(UserEntity::class)->find($user->getId());
+        $existing = $this->entityManager->createQueryBuilder()
+            ->select('u')
+            ->from(UserEntity::class, 'u')
+            ->where('u.id = :id')
+            ->setParameter('id', $user->getId())
+            ->getQuery()
+            ->getOneOrNullResult();
 
         if ($existing instanceof UserEntity) {
             $existing->setName($user->getName());
@@ -36,16 +42,26 @@ final class DoctrineUserRepository implements UserRepositoryPort
 
     public function findByEmail(string $email): ?DomainUser
     {
-        $entity = $this->entityManager
-            ->getRepository(UserEntity::class)
-            ->findOneBy(['email' => $email]);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('u')
+            ->from(UserEntity::class, 'u')
+            ->where('u.email = :email')
+            ->setParameter('email', $email)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $entity?->toDomain();
     }
 
     public function findById(string $id): ?DomainUser
     {
-        $entity = $this->entityManager->getRepository(UserEntity::class)->find($id);
+        $entity = $this->entityManager->createQueryBuilder()
+            ->select('u')
+            ->from(UserEntity::class, 'u')
+            ->where('u.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $entity?->toDomain();
     }

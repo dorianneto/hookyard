@@ -28,19 +28,30 @@ final class DoctrineDeliveryAttemptRepository implements DeliveryAttemptReposito
 
     public function countByEventAndEndpoint(string $eventId, string $endpointId): int
     {
-        return count(
-            $this->entityManager
-                ->getRepository(DeliveryAttemptEntity::class)
-                ->findBy(['event' => $eventId, 'endpoint' => $endpointId])
-        );
+        return (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(da.id)')
+            ->from(DeliveryAttemptEntity::class, 'da')
+            ->where('da.event = :eventId')
+            ->andWhere('da.endpoint = :endpointId')
+            ->setParameter('eventId', $eventId)
+            ->setParameter('endpointId', $endpointId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /** @return DomainDeliveryAttempt[] */
     public function findAllByEventAndEndpoint(string $eventId, string $endpointId): array
     {
-        $entities = $this->entityManager
-            ->getRepository(DeliveryAttemptEntity::class)
-            ->findBy(['event' => $eventId, 'endpoint' => $endpointId], ['attemptNumber' => 'ASC']);
+        $entities = $this->entityManager->createQueryBuilder()
+            ->select('da')
+            ->from(DeliveryAttemptEntity::class, 'da')
+            ->where('da.event = :eventId')
+            ->andWhere('da.endpoint = :endpointId')
+            ->setParameter('eventId', $eventId)
+            ->setParameter('endpointId', $endpointId)
+            ->orderBy('da.attemptNumber', 'ASC')
+            ->getQuery()
+            ->getResult();
 
         return array_map(static fn(DeliveryAttemptEntity $e) => $e->toDomain(), $entities);
     }
