@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.0] — 2026-05-10
+
+### Added
+
+#### Backend
+- Logs module — `GET /api/v1/logs` endpoint with filterable, paginated access to Monolog `hookyard` channel entries (`ListLogsUseCase`, `DoctrineLogRepository`, `ListLogsController`)
+- Audit module — `GET /api/v1/audit` endpoint exposing a trail of user actions (`ListAuditLogsUseCase`, `DoctrineAuditRepository`, `ListAuditLogsController`, `AuditLog` domain entity)
+- Automatic audit event recording on key mutations (`AddEndpointUseCase`, `DeleteEndpointUseCase`, `CreateSourceUseCase`, `DeleteSourceUseCase`, `RegisterUserUseCase`, `UpdateAccountUseCase`) via `AuditableActionEvent` and `RecordAuditEntryListener`
+- `audit_logs` table and updated index migrations
+
+#### Frontend
+- Logs page with filterable, paginated log viewer
+- Audit page with filterable audit trail viewer
+- Logs and Audit entries added to sidebar navigation
+- `Popover` and `Select` shadcn/ui components
+
+### Fixed
+
+- Incorrect database indexes and foreign key constraints corrected across multiple tables
+
+### Changed
+
+- Elastic Beanstalk extension files removed (`.ebextensions/`, `.ebignore`, nginx platform config)
+- Legacy `.claude/plans/` planning documents removed
+
+### Documentation
+
+- PRD and tasks files added for logs and audit modules
+- Project skills added for PRD generation and changelog updates
+
+---
+
 ## [0.3.0] — 2026-05-08
 
 ### Changed
