@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Application\UseCase\Endpoint;
 
+use App\Application\Event\AuditableActionEvent;
+use App\Application\Port\AuditEventDispatcherPort;
 use App\Application\Port\EndpointRepositoryPort;
 use App\Application\Port\EventRepositoryPort;
 use App\Application\Port\SourceRepositoryPort;
@@ -25,14 +27,16 @@ final class DeleteEndpointUseCaseTest extends TestCase
     private SourceRepositoryPort&MockObject $sourceRepository;
     private EventRepositoryPort&MockObject $eventRepository;
     private TransactionPort&Stub $transaction;
+    private AuditEventDispatcherPort&MockObject $auditDispatcher;
     private DeleteEndpointUseCase $useCase;
 
     protected function setUp(): void
     {
-        $this->repository      = $this->createMock(EndpointRepositoryPort::class);
+        $this->repository       = $this->createMock(EndpointRepositoryPort::class);
         $this->sourceRepository = $this->createMock(SourceRepositoryPort::class);
         $this->eventRepository  = $this->createMock(EventRepositoryPort::class);
-        $this->transaction = $this->createStub(TransactionPort::class);
+        $this->transaction      = $this->createStub(TransactionPort::class);
+        $this->auditDispatcher  = $this->createMock(AuditEventDispatcherPort::class);
 
         $this->transaction
             ->method('execute')
@@ -43,10 +47,12 @@ final class DeleteEndpointUseCaseTest extends TestCase
             $this->sourceRepository,
             $this->eventRepository,
             $this->transaction,
+            $this->auditDispatcher,
             new NullLogger(),
         );
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testExecuteDeletesEventsBeforeEndpoint(): void
     {
         $endpoint = new Endpoint('endpoint-id', 'source-id', 'https://example.com', new \DateTimeImmutable());
@@ -115,5 +121,28 @@ final class DeleteEndpointUseCaseTest extends TestCase
         $this->expectException(SourceNotFoundException::class);
 
         $this->useCase->execute('request-id', 'endpoint-id', 'other-user-id');
+    }
+
+    #[AllowMockObjectsWithoutExpectations]
+    public function testDispatchesAuditEventAfterSuccessfulTransaction(): void
+    {
+        $endpoint = new Endpoint('endpoint-id', 'source-id', 'https://example.com', new \DateTimeImmutable());
+
+        $this->repository
+            ->method('findById')
+            ->willReturn($endpoint);
+
+        $this->sourceRepository
+            ->method('findById')
+            ->willReturn($this->createStub(Source::class));
+
+        $this->auditDispatcher
+            ->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AuditableActionEvent $event): bool {
+                return $event->action === 'delete' && $event->resource === 'endpoint';
+            }));
+
+        $this->useCase->execute('request-id', 'endpoint-id', 'user-id');
     }
 }

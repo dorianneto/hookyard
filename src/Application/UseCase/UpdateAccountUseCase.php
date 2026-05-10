@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\UseCase;
 
+use App\Application\Event\AuditableActionEvent;
+use App\Application\Port\AuditEventDispatcherPort;
 use App\Application\Port\UserRepositoryPort;
 use App\Domain\Exception\InvalidPasswordException;
 use App\Domain\User;
@@ -15,6 +17,7 @@ final class UpdateAccountUseCase
 {
     public function __construct(
         private readonly UserRepositoryPort $userRepository,
+        private readonly AuditEventDispatcherPort $auditDispatcher,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -59,7 +62,24 @@ final class UpdateAccountUseCase
             name:         $name,
         );
 
+        $changedFields = [];
+        if ($name !== $user->getName()) {
+            $changedFields[] = 'name';
+        }
+        if ($newPasswordHash !== null) {
+            $changedFields[] = 'password';
+        }
+
         $this->userRepository->save($updated);
+
+        $this->auditDispatcher->dispatch(new AuditableActionEvent(
+            userId:     $userId,
+            requestId:  $requestId,
+            action:     'edit',
+            resource:   'account',
+            resourceId: $userId,
+            metadata:   ['changed_fields' => $changedFields],
+        ));
 
         $this->logger->info('Update account updated', [
             'request_id' => $requestId,

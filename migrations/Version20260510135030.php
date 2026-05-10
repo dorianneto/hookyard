@@ -14,7 +14,7 @@ final class Version20260510135030 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Migration diff for changing ID columns to VARCHAR and adding foreign key constraints';
     }
 
     public function up(Schema $schema): void

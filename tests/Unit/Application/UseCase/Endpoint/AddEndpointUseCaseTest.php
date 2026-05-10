@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Application\UseCase\Endpoint;
 
+use App\Application\Event\AuditableActionEvent;
+use App\Application\Port\AuditEventDispatcherPort;
 use App\Application\Port\EndpointRepositoryPort;
 use App\Application\Port\SourceRepositoryPort;
 use App\Application\UseCase\Endpoint\AddEndpointUseCase;
@@ -19,15 +21,18 @@ final class AddEndpointUseCaseTest extends TestCase
 {
     private EndpointRepositoryPort&MockObject $repository;
     private SourceRepositoryPort&MockObject $sourceRepository;
+    private AuditEventDispatcherPort&MockObject $auditDispatcher;
     private AddEndpointUseCase $useCase;
 
     protected function setUp(): void
     {
         $this->repository       = $this->createMock(EndpointRepositoryPort::class);
         $this->sourceRepository = $this->createMock(SourceRepositoryPort::class);
-        $this->useCase          = new AddEndpointUseCase($this->repository, $this->sourceRepository, new NullLogger());
+        $this->auditDispatcher  = $this->createMock(AuditEventDispatcherPort::class);
+        $this->useCase          = new AddEndpointUseCase($this->repository, $this->sourceRepository, $this->auditDispatcher, new NullLogger());
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testExecuteSavesEndpointWithCorrectData(): void
     {
         $this->sourceRepository
@@ -62,6 +67,7 @@ final class AddEndpointUseCaseTest extends TestCase
         $this->assertSame('https://example.com/hook', $result->getUrl());
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testExecuteThrowsWhenSourceNotOwned(): void
     {
         $this->sourceRepository
@@ -76,6 +82,7 @@ final class AddEndpointUseCaseTest extends TestCase
         $this->useCase->execute('request-id', 'test-id', 'source-id', 'https://example.com/hook', 'other-user-id');
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testExecuteThrowsOnInvalidUrl(): void
     {
         $this->sourceRepository
@@ -89,5 +96,22 @@ final class AddEndpointUseCaseTest extends TestCase
         $this->expectExceptionMessage('Invalid URL format.');
 
         $this->useCase->execute('request-id', 'test-id', 'source-id', 'not-a-valid-url', 'user-id');
+    }
+
+    #[AllowMockObjectsWithoutExpectations]
+    public function testDispatchesAuditEventAfterSuccessfulSave(): void
+    {
+        $this->sourceRepository
+            ->method('findById')
+            ->willReturn($this->createStub(Source::class));
+
+        $this->auditDispatcher
+            ->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AuditableActionEvent $event): bool {
+                return $event->action === 'create' && $event->resource === 'endpoint';
+            }));
+
+        $this->useCase->execute('request-id', 'test-id', 'source-id', 'https://example.com/hook', 'user-id');
     }
 }

@@ -12,6 +12,7 @@ import NewEndpointPage from "./pages/NewEndpointPage";
 import EventDetailPage from "./pages/EventDetailPage";
 import AccountPage from "./pages/AccountPage";
 import LogsPage from "./pages/LogsPage";
+import AuditPage from "./pages/AuditPage";
 
 function App() {
   return (
@@ -96,6 +97,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <AccountPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/audit"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AuditPage />
                 </Layout>
               </ProtectedRoute>
             }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\UseCase\Source;
 
+use App\Application\Event\AuditableActionEvent;
+use App\Application\Port\AuditEventDispatcherPort;
 use App\Application\Port\SourceRepositoryPort;
 use App\Domain\Source;
 use Monolog\Attribute\WithMonologChannel;
@@ -15,6 +17,7 @@ final class CreateSourceUseCase
 {
     public function __construct(
         private readonly SourceRepositoryPort $sourceRepository,
+        private readonly AuditEventDispatcherPort $auditDispatcher,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -36,6 +39,15 @@ final class CreateSourceUseCase
         );
 
         $this->sourceRepository->save($source);
+
+        $this->auditDispatcher->dispatch(new AuditableActionEvent(
+            userId:     $userId,
+            requestId:  $requestId,
+            action:     'create',
+            resource:   'source',
+            resourceId: $id,
+            metadata:   ['name' => $name],
+        ));
 
         $this->logger->info('Create source created', [
             'request_id' => $requestId,

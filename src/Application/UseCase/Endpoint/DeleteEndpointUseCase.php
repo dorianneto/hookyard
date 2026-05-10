@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\UseCase\Endpoint;
 
+use App\Application\Event\AuditableActionEvent;
+use App\Application\Port\AuditEventDispatcherPort;
 use App\Application\Port\EndpointRepositoryPort;
 use App\Application\Port\EventRepositoryPort;
 use App\Application\Port\SourceRepositoryPort;
@@ -21,6 +23,7 @@ final class DeleteEndpointUseCase
         private readonly SourceRepositoryPort $sourceRepository,
         private readonly EventRepositoryPort $eventRepository,
         private readonly TransactionPort $transaction,
+        private readonly AuditEventDispatcherPort $auditDispatcher,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -42,11 +45,14 @@ final class DeleteEndpointUseCase
             throw new EndpointNotFoundException('Endpoint not found.');
         }
 
-        if ($this->sourceRepository->findById($endpoint->getSourceId(), $userId) === null) {
+        $endpointUrl = $endpoint->getUrl();
+        $sourceId    = $endpoint->getSourceId();
+
+        if ($this->sourceRepository->findById($sourceId, $userId) === null) {
             $this->logger->info('Delete endpoint source not found', [
                 'request_id'  => $requestId,
                 'endpoint_id' => $id,
-                'source_id'   => $endpoint->getSourceId(),
+                'source_id'   => $sourceId,
             ]);
 
             throw new SourceNotFoundException('Source not found.');
@@ -62,6 +68,15 @@ final class DeleteEndpointUseCase
 
             $this->endpointRepository->delete($id);
         });
+
+        $this->auditDispatcher->dispatch(new AuditableActionEvent(
+            userId:     $userId,
+            requestId:  $requestId,
+            action:     'delete',
+            resource:   'endpoint',
+            resourceId: $id,
+            metadata:   ['url' => $endpointUrl, 'source_id' => $sourceId],
+        ));
 
         $this->logger->info('Delete endpoint deleted', [
             'request_id'  => $requestId,

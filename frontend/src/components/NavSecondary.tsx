@@ -89,7 +89,7 @@ export function NavSecondary({
               </SidebarMenuButton>
               <CommandDialog open={open} onOpenChange={setOpen}>
                 <Command>
-                  <CommandInput placeholder="Search for a module..." />
+                  <CommandInput placeholder="Search for a resource..." />
                   <CommandList>
                     <CommandEmpty>No results found.</CommandEmpty>
                     <CommandGroup heading="Modules">
@@ -116,6 +116,24 @@ export function NavSecondary({
                         }}
                       >
                         Logs
+                      </CommandItem>
+                    </CommandGroup>
+                    <CommandGroup heading="User">
+                      <CommandItem
+                        onSelect={() => {
+                          setOpen(false);
+                          navigate("/account");
+                        }}
+                      >
+                        Account
+                      </CommandItem>
+                      <CommandItem
+                        onSelect={() => {
+                          setOpen(false);
+                          navigate("/audit");
+                        }}
+                      >
+                        Audit
                       </CommandItem>
                     </CommandGroup>
                   </CommandList>

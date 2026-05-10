@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\UseCase\Source;
 
+use App\Application\Event\AuditableActionEvent;
+use App\Application\Port\AuditEventDispatcherPort;
 use App\Application\Port\SourceRepositoryPort;
 use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
@@ -13,6 +15,7 @@ final class DeleteSourceUseCase
 {
     public function __construct(
         private readonly SourceRepositoryPort $sourceRepository,
+        private readonly AuditEventDispatcherPort $auditDispatcher,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -24,6 +27,15 @@ final class DeleteSourceUseCase
         ]);
 
         $this->sourceRepository->delete($id, $userId);
+
+        $this->auditDispatcher->dispatch(new AuditableActionEvent(
+            userId:     $userId,
+            requestId:  $requestId,
+            action:     'delete',
+            resource:   'source',
+            resourceId: $id,
+            metadata:   ['source_id' => $id],
+        ));
 
         $this->logger->info('Delete source deleted', [
             'request_id' => $requestId,

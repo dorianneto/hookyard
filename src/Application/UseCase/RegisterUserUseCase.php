@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\UseCase;
 
+use App\Application\Event\AuditableActionEvent;
+use App\Application\Port\AuditEventDispatcherPort;
 use App\Application\Port\UserRepositoryPort;
 use App\Domain\Exception\EmailAlreadyTakenException;
 use App\Domain\User;
@@ -15,6 +17,7 @@ final class RegisterUserUseCase
 {
     public function __construct(
         private readonly UserRepositoryPort $userRepository,
+        private readonly AuditEventDispatcherPort $auditDispatcher,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -41,6 +44,15 @@ final class RegisterUserUseCase
         );
 
         $this->userRepository->save($user);
+
+        $this->auditDispatcher->dispatch(new AuditableActionEvent(
+            userId:     $id,
+            requestId:  $requestId,
+            action:     'create',
+            resource:   'account',
+            resourceId: $id,
+            metadata:   ['email' => $email],
+        ));
 
         $this->logger->info('Register user registered', [
             'request_id' => $requestId,
