@@ -109,6 +109,14 @@ export function NavSecondary({
                       >
                         Sources
                       </CommandItem>
+                      <CommandItem
+                        onSelect={() => {
+                          setOpen(false);
+                          navigate("/logs");
+                        }}
+                      >
+                        Logs
+                      </CommandItem>
                     </CommandGroup>
                   </CommandList>
                 </Command>

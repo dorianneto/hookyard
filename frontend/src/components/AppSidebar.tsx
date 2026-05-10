@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   IconDashboard,
   IconDatabase,
+  IconFileText,
   IconHelp,
   IconTrack,
   IconSearch,
@@ -32,6 +33,11 @@ const data = {
       title: "Sources",
       url: "/sources",
       icon: IconDatabase,
+    },
+    {
+      title: "Logs",
+      url: "/logs",
+      icon: IconFileText,
     },
   ],
   navSecondary: [

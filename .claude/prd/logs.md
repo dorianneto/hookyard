@@ -159,51 +159,91 @@ interface LogRepositoryPort
 
 Inject `Doctrine\DBAL\Connection`. Implements `LogRepositoryPort`.
 
-**Data query** (parameterized; dynamic `WHERE` clauses appended only when filter arrays are non-empty):
+Build queries via DBAL's `$this->connection->createQueryBuilder()`. Extract a private `buildBaseQuery(string $userId, LogFilters $filters): QueryBuilder` method that both `findByUser` and `countByUser` call so the `FROM` / `JOIN` / `WHERE` logic is never duplicated.
 
-```sql
-SELECT
-    e.id              AS event_id,
-    e.received_at     AS event_received_at,
-    s.name            AS source_name,
-    s.id              AS source_id,
-    ep.id             AS endpoint_id,
-    ep.url            AS endpoint_url,
-    eed.status        AS delivery_status,
-    COALESCE(da_agg.attempt_count, 0) AS attempt_count,
-    da_agg.latest_attempt_at,
-    da_last.status_code AS latest_attempt_status_code
-FROM event_endpoint_deliveries eed
-JOIN events    e  ON e.id  = eed.event_id
-JOIN sources   s  ON s.id  = e.source_id
-JOIN endpoints ep ON ep.id = eed.endpoint_id
-LEFT JOIN (
-    SELECT event_id, endpoint_id,
-           COUNT(*)          AS attempt_count,
-           MAX(attempted_at) AS latest_attempt_at
-    FROM delivery_attempts
-    GROUP BY event_id, endpoint_id
-) da_agg ON da_agg.event_id   = eed.event_id
-        AND da_agg.endpoint_id = eed.endpoint_id
-LEFT JOIN LATERAL (
-    SELECT status_code
-    FROM delivery_attempts
-    WHERE event_id    = eed.event_id
-      AND endpoint_id = eed.endpoint_id
-    ORDER BY attempt_number DESC
-    LIMIT 1
-) da_last ON TRUE
-WHERE s.user_id = :userId
-  -- AND ep.id = ANY(:endpointIds)   appended when endpointIds non-empty
-  -- AND s.id  = ANY(:sourceIds)     appended when sourceIds non-empty
-  -- AND eed.status = :status        appended when status non-null
-ORDER BY e.received_at DESC
-LIMIT :limit OFFSET :offset
+**Base query builder** (shared between data and count queries):
+
+```php
+private function buildBaseQuery(string $userId, LogFilters $filters): QueryBuilder
+{
+    $aggSub = $this->connection->createQueryBuilder()
+        ->select('da.event_id, da.endpoint_id, COUNT(*) AS attempt_count, MAX(da.attempted_at) AS latest_attempt_at')
+        ->from('delivery_attempts', 'da')
+        ->groupBy('da.event_id, da.endpoint_id');
+
+    $qb = $this->connection->createQueryBuilder()
+        ->from('event_endpoint_deliveries', 'eed')
+        ->join('eed', 'events',    'e',  'e.id  = eed.event_id')
+        ->join('e',   'sources',   's',  's.id  = e.source_id')
+        ->join('eed', 'endpoints', 'ep', 'ep.id = eed.endpoint_id')
+        ->leftJoin('eed', '(' . $aggSub->getSQL() . ')', 'da_agg',
+            'da_agg.event_id = eed.event_id AND da_agg.endpoint_id = eed.endpoint_id')
+        ->where('s.user_id = :userId')
+        ->setParameter('userId', $userId);
+
+    if ($filters->endpointIds !== []) {
+        $qb->andWhere('ep.id IN (:endpointIds)')
+           ->setParameter('endpointIds', $filters->endpointIds, ArrayParameterType::STRING);
+    }
+
+    if ($filters->sourceIds !== []) {
+        $qb->andWhere('s.id IN (:sourceIds)')
+           ->setParameter('sourceIds', $filters->sourceIds, ArrayParameterType::STRING);
+    }
+
+    if ($filters->status !== null) {
+        $qb->andWhere('eed.status = :status')
+           ->setParameter('status', $filters->status);
+    }
+
+    return $qb;
+}
 ```
 
-The count query reuses the same `FROM` / `JOIN` / `WHERE` block with `SELECT COUNT(*) AS total` and no `LIMIT`/`OFFSET`.
+**`findByUser`** adds the SELECT columns, the correlated subquery for the latest HTTP status code, ordering, and pagination on top of the base query:
 
-Map each result row to a `LogEntry`, parsing `event_received_at` and `latest_attempt_at` as `\DateTimeImmutable` (or `null`).
+```php
+public function findByUser(string $userId, LogFilters $filters): array
+{
+    $latestCodeSub =
+        '(SELECT da2.status_code FROM delivery_attempts da2'
+        . ' WHERE da2.event_id = eed.event_id AND da2.endpoint_id = eed.endpoint_id'
+        . ' ORDER BY da2.attempt_number DESC LIMIT 1)';
+
+    $rows = $this->buildBaseQuery($userId, $filters)
+        ->select(
+            'e.id AS event_id',
+            'e.received_at AS event_received_at',
+            's.name AS source_name',
+            's.id AS source_id',
+            'ep.id AS endpoint_id',
+            'ep.url AS endpoint_url',
+            'eed.status AS delivery_status',
+            'COALESCE(da_agg.attempt_count, 0) AS attempt_count',
+            'da_agg.latest_attempt_at',
+            $latestCodeSub . ' AS latest_attempt_status_code',
+        )
+        ->orderBy('e.received_at', 'DESC')
+        ->setMaxResults($filters->perPage)
+        ->setFirstResult(($filters->page - 1) * $filters->perPage)
+        ->fetchAllAssociative();
+
+    return array_map($this->toLogEntry(...), $rows);
+}
+```
+
+**`countByUser`** reuses the base query with a single `COUNT(*)`:
+
+```php
+public function countByUser(string $userId, LogFilters $filters): int
+{
+    return (int) $this->buildBaseQuery($userId, $filters)
+        ->select('COUNT(*)')
+        ->fetchOne();
+}
+```
+
+Map each result row to a `LogEntry` in a private `toLogEntry(array $row): LogEntry` method, parsing `event_received_at` and `latest_attempt_at` as `\DateTimeImmutable` (or `null`). Import `Doctrine\DBAL\ArrayParameterType` for the `IN` bindings.
 
 #### Use Case
 

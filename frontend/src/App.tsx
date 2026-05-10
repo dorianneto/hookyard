@@ -11,6 +11,7 @@ import SourceDetailPage from "./pages/SourceDetailPage";
 import NewEndpointPage from "./pages/NewEndpointPage";
 import EventDetailPage from "./pages/EventDetailPage";
 import AccountPage from "./pages/AccountPage";
+import LogsPage from "./pages/LogsPage";
 
 function App() {
   return (
@@ -25,6 +26,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <DashboardPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/logs"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LogsPage />
                 </Layout>
               </ProtectedRoute>
             }
