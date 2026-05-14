@@ -19,11 +19,11 @@ class DeliveryAttempt
     private string $id;
 
     #[ORM\ManyToOne(targetEntity: Event::class)]
-    #[ORM\JoinColumn(name: 'event_id', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'event_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private Event $event;
 
     #[ORM\ManyToOne(targetEntity: Endpoint::class)]
-    #[ORM\JoinColumn(name: 'endpoint_id', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'endpoint_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private Endpoint $endpoint;
 
     #[ORM\Column(name: 'attempt_number', type: Types::INTEGER)]

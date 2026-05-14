@@ -18,7 +18,7 @@ class Endpoint
     private string $id;
 
     #[ORM\ManyToOne(targetEntity: Source::class)]
-    #[ORM\JoinColumn(name: 'source_id', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'source_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private Source $source;
 
     #[ORM\Column(type: Types::STRING)]
