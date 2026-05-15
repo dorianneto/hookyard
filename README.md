@@ -29,7 +29,7 @@ Open Source **Webhook-as-a-Service (WaaS)** platform that receives webhooks from
 | Frontend | React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS v4 |
 | Database | PostgreSQL 17 |
 | Queue | Symfony Messenger (AWS SQS) |
-| Deployment | AWS Elastic Beanstalk (monolith) |
+| Deployment | Docker (nginx + PHP-FPM + supervisord) |
 
 ## Architecture
 
@@ -133,8 +133,24 @@ erDiagram
     users {
         int id PK
         string email
-        string password
+        string password_hash
+        string name
+        int plan_id FK
         timestamp created_at
+    }
+
+    plans {
+        int id PK
+        string name
+        int monthly_request_limit
+        timestamp created_at
+    }
+
+    request_usage {
+        int id PK
+        int user_id FK
+        date bucket_date
+        int count
     }
 
     sources {
@@ -182,7 +198,20 @@ erDiagram
         timestamp attempted_at
     }
 
+    audit_logs {
+        string id PK
+        int user_id FK
+        string action
+        string resource
+        string resource_id
+        json metadata
+        timestamp created_at
+    }
+
+    users }o--|| plans : "belongs to"
+    users ||--o{ request_usage : tracks
     users ||--o{ sources : owns
+    users ||--o{ audit_logs : generates
     sources ||--o{ endpoints : has
     sources ||--o{ events : receives
     events ||--o{ event_endpoint_deliveries : tracks
@@ -193,7 +222,9 @@ erDiagram
 
 ### Key relationships
 
+- A **User** belongs to a **Plan** that defines a `monthly_request_limit`. Rolling 30-day usage is tracked per-day in `request_usage`; ingest is rejected once the limit is reached.
 - A **Source** belongs to one user and has many **Endpoints** and many **Events**.
 - When an Event arrives, one **`event_endpoint_deliveries`** row is created per active Endpoint (unique on `(event_id, endpoint_id)`).
 - Each delivery row accumulates up to 5 **`delivery_attempts`** (exponential backoff: immediate → 30s → 5m → 30m → 2h).
 - `events.status` (`pending` / `delivered` / `failed`) is a denormalized cache recomputed atomically from all delivery rows every time a delivery row changes.
+- **`audit_logs`** records every mutating user action (source/endpoint create & delete, account updates, registration) with structured metadata.

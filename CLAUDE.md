@@ -38,11 +38,12 @@ npm run build  # Production build → output goes to Symfony's public/ directory
 ### Hexagonal Architecture (Ports & Adapters)
 The backend is strictly layered:
 
-- **`src/Domain/`** — Pure business entities (`Source`, `Event`, `Endpoint`, `DeliveryAttempt`, `EventEndpointDelivery`, `EventStatus`), value objects, and domain exceptions. No Symfony or Doctrine imports allowed here.
-- **`src/Application/`** — Ports (interfaces in `Port/`), use cases (`UseCase/` grouped by entity), Messenger messages (`Message/`), and value objects (`Value/`). Orchestrates domain objects; no framework code.
+- **`src/Domain/`** — Pure business entities (`Source`, `Event`, `Endpoint`, `DeliveryAttempt`, `EventEndpointDelivery`, `EventStatus`, `AuditLog`, `User`, `Plan`), value objects, and domain exceptions. No Symfony or Doctrine imports allowed here.
+- **`src/Application/`** — Ports (interfaces in `Port/`), use cases (`UseCase/` grouped by entity), Messenger messages (`Message/`), Symfony application events (`Event/`), and value objects (`Value/`). Orchestrates domain objects; no framework code.
 - **`src/Entity/`** — Doctrine ORM entities (separate from domain entities). These are infrastructure adapters mapped to the DB tables.
-- **`src/Controller/Api/v1/`** — Symfony controllers grouped by resource (`Source/`, `Endpoint/`, `Event/`).
-- **`src/Infrastructure/`** — Concrete adapters: `Http/` (outbound HTTP delivery), `Messaging/` (Messenger handlers), `Persistence/` (Doctrine repositories), `Transaction/` (DB transaction wrapper).
+- **`src/Controller/`** — Top-level controllers (`IngestEventController`, `RegistrationController`, `AccountController`, `MeController`, `SpaController`, `HealthCheckController`) plus `Api/v1/` JSON API controllers grouped by resource (`Source/`, `Endpoint/`, `Event/`, `Audit/`, `Dashboard/`, `Log/`).
+- **`src/Infrastructure/`** — Concrete adapters: `Http/` (outbound HTTP delivery), `Messaging/` (Messenger handlers), `Persistence/` (Doctrine repositories), `Transaction/` (DB transaction wrapper), `EventDispatcher/` (Symfony event dispatcher adapters), `EventListener/` (Symfony event listeners).
+- **`src/Command/`** — Symfony console commands (`PruneRequestUsageCommand`).
 - **`src/Security/`** and **`src/EventSubscriber/`** — Symfony security voter/authenticator and event subscribers.
 
 Domain and Application code must never import from `Symfony\` or `Doctrine\` namespaces.
@@ -52,6 +53,19 @@ Domain and Application code must never import from `Symfony\` or `Doctrine\` nam
 - The `worker` service processes the queue and POSTs the raw body + headers to each Endpoint URL.
 - Adds `X-Webhook-Event-Id: <events.id>` header to all outgoing delivery requests.
 - Timeout per attempt: 10 seconds. Success = any `2xx`. 5 attempts max (immediate, 30s, 5m, 30m, 2h).
+
+### Plans & Quota
+Each user belongs to a `Plan` (monthly request limit). `IngestEventUseCase` enforces quota before persisting an event: it sums rolling 30-day request usage via `RequestUsageRepositoryPort.sumRolling30Days()` and throws `QuotaExceededException` if the limit is reached. On successful ingest, an `IngestCompletedEvent` is dispatched; `RecordRequestUsageListener` increments today's counter.
+
+Old usage rows are pruned daily by `PruneRequestUsageCommand`, which uses `#[AsCronTask('0 0 * * *')]` (Symfony Scheduler, schedule name `prune-request-usage`) and deletes rows older than 30 days.
+
+### Application Events (Symfony Dispatcher)
+`src/Application/Event/` contains two synchronous Symfony events — distinct from Messenger messages:
+
+- `AuditableActionEvent` — dispatched by use cases after any mutating action (create/delete source, endpoint, etc.). `RecordAuditEntryListener` persists an `AuditLog` row.
+- `IngestCompletedEvent` — dispatched by `IngestEventUseCase` after a successful ingest. `RecordRequestUsageListener` increments the rolling usage counter.
+
+Dispatching uses `AuditEventDispatcherPort` / `IngestEventDispatcherPort` (ports), implemented by `SymfonyAuditEventDispatcher` / `SymfonyIngestEventDispatcher` in `src/Infrastructure/EventDispatcher/`. This keeps the Application layer free of Symfony imports.
 
 ### Event Status Recomputation
 `events.status` (`pending` / `delivered` / `failed`) is a denormalized cache derived from `event_endpoint_deliveries`. Rules:
