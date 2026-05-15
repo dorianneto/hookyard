@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.1] — 2026-05-15
+
+### Added
+
+- GitHub Actions CI/CD workflow for automated build and deployment.
+
+### Changed
+
+#### Frontend
+- Project name added to Login and Register pages.
+- Favicon updated.
+
+#### Dependencies
+- Composer and npm packages updated to latest versions.
+
+### Fixed
+
+- Source deletion corrected; schema migration applied to resolve entity constraint issues on related tables (`DeliveryAttempt`, `Endpoint`, `Event`, `EventEndpointDelivery`).
+
+### Documentation
+
+- CLAUDE.md updated with additional logging and architecture guidelines.
+- README updated with revised logo and project description.
+
+---
+
 ## [0.4.0] — 2026-05-10
 
 ### Added
