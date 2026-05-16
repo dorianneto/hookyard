@@ -29,7 +29,7 @@ Open Source **Webhook-as-a-Service (WaaS)** platform that receives webhooks from
 | Frontend | React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS v4 |
 | Database | PostgreSQL 17 |
 | Queue | Symfony Messenger |
-| Deployment | Docker (nginx + PHP-FPM + supervisord) |
+| Deployment | Docker (FrankenPHP + supervisord) |
 
 ## Architecture
 
@@ -100,6 +100,14 @@ Worker:
 ## Development
 
 ### Start all services
+
+Before to start the services, you need to generate a self-signed certificate by runnig the following command into `./docker/certs`:
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365
+```
+
+Once the certificate is generated (make sure to fill out all the fields), you can start the services:
 
 ```bash
 docker compose up -d

@@ -14,7 +14,7 @@ RUN install-php-extensions pdo_pgsql intl zip pcntl opcache
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 RUN curl -sS https://get.symfony.com/cli/installer | bash \
-  && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
+    && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
 
 RUN mkdir -p /var/log/supervisor
 
@@ -27,8 +27,10 @@ COPY docker/php/opcache.dev.ini /usr/local/etc/php/conf.d/opcache.ini
 WORKDIR /app
 COPY . .
 
+COPY docker/certs/cert.pem docker/certs/key.pem /certs/
+
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["frankenphp", "php-server", "--root=/app/public", "--listen=:80"]
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]

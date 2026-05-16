@@ -12,8 +12,8 @@ services:
       - caddy_config:/config
     ports:
       - "8000:80"
-      - "443:443"
-      - "443:443/udp"
+      - "8443:443"
+      - "8443:443/udp"
     depends_on:
       db:
         condition: service_healthy
