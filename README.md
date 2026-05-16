@@ -1,4 +1,4 @@
-<p align="center"><a href="https://hookyard.dorianneto.com" target="_blank"><img src="https://raw.githubusercontent.com/dorianneto/hookyard-art/refs/heads/main/h-white-logo.svg" width="400" alt="HookYard Logo"></a></p>
+<p align="center"><img src="https://raw.githubusercontent.com/dorianneto/hookyard-art/refs/heads/main/h-white-logo.svg" width="600" alt="HookYard Logo"></p>
 
 # About HookYard
 
