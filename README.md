@@ -28,7 +28,7 @@ Open Source **Webhook-as-a-Service (WaaS)** platform that receives webhooks from
 | Backend | PHP 8.4 / Symfony 7 |
 | Frontend | React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS v4 |
 | Database | PostgreSQL 17 |
-| Queue | Symfony Messenger (AWS SQS) |
+| Queue | Symfony Messenger |
 | Deployment | Docker (nginx + PHP-FPM + supervisord) |
 
 ## Architecture
@@ -114,6 +114,8 @@ php bin/phpunit                               # run all tests
 ```
 
 ### Frontend
+
+> Note: There is a docker service called `frontend` that is responsible for running `npm run watch`, so all you have to do is refresh the page once a frontend change is made.
 
 ```bash
 npm run build  # production build → public/
