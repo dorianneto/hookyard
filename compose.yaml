@@ -4,11 +4,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: hookyard_php
-      args:
-        APP_ENV: dev
+      target: hookyard_runner
     volumes:
       - .:/app
+      - ./docker/frankenphp:/etc/frankenphp
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "8000:80"
+      - "443:443"
+      - "443:443/udp"
     depends_on:
       db:
         condition: service_healthy
@@ -21,23 +26,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
-    networks:
-        - hookyarddev
-
-  nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: hookyard_nginx
-    volumes:
-      - .:/usr/share/nginx/html:ro
-    ports:
-      - "8000:80"
-    depends_on:
-      app:
-        condition: service_healthy
-    restart: always
-    container_name: hookyard-nginx
     networks:
         - hookyarddev
 
@@ -80,9 +68,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: hookyard_php
-      args:
-        APP_ENV: dev
+      target: hookyard_runner
     volumes:
       - .:/app
     command: supervisord -c /etc/supervisor/supervisord.conf
@@ -101,6 +87,8 @@ services:
 
 volumes:
   database_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   hookyarddev:
