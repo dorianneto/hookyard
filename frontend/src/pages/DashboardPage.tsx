@@ -11,6 +11,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
+import { EventsByDayChart, type DayEventCount } from "@/components/EventsByDayChart";
+import { QuotaByDayChart, type DayQuota } from "@/components/QuotaByDayChart";
 
 interface DashboardStats {
   totalSources: number;
@@ -24,10 +26,19 @@ interface DashboardStats {
   quotaLimit: number;
 }
 
+interface ChartsData {
+  eventsByDay: DayEventCount[];
+  quotaByDay: DayQuota[];
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [charts, setCharts] = useState<ChartsData | null>(null);
+  const [chartsLoading, setChartsLoading] = useState(true);
+  const [chartsError, setChartsError] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetch("/api/v1/dashboard")
@@ -42,6 +53,21 @@ export default function DashboardPage() {
         ),
       )
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    apiFetch("/api/v1/dashboard/charts")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load chart data.");
+        return res.json() as Promise<ChartsData>;
+      })
+      .then(setCharts)
+      .catch((err: unknown) =>
+        setChartsError(
+          err instanceof Error ? err.message : "Failed to load chart data.",
+        ),
+      )
+      .finally(() => setChartsLoading(false));
   }, []);
 
   if (error) {
@@ -192,6 +218,40 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {chartsLoading ? (
+          <>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-4 w-48" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-52 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-4 w-48" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-52 w-full" />
+              </CardContent>
+            </Card>
+          </>
+        ) : chartsError ? (
+          <Alert variant="destructive" className="col-span-full">
+            <AlertDescription>{chartsError}</AlertDescription>
+          </Alert>
+        ) : charts ? (
+          <>
+            <EventsByDayChart data={charts.eventsByDay} />
+            {charts.quotaByDay.length > 0 && (
+              <QuotaByDayChart data={charts.quotaByDay} />
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );
