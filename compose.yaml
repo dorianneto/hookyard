@@ -79,14 +79,38 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+      queue:
+        condition: service_healthy
     env_file: .env.local
     restart: always
     container_name: hookyard-worker
     networks:
         - hookyarddev
 
+  queue:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    container_name: hookyard-queue
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+        - hookyarddev
+
+
 volumes:
   database_data:
+  rabbitmq_data:
   caddy_data:
   caddy_config:
 

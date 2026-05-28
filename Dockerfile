@@ -9,7 +9,7 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
 
 RUN apk update && apk add --no-cache supervisor bash
 
-RUN install-php-extensions pdo_pgsql intl zip pcntl opcache
+RUN install-php-extensions pdo_pgsql intl zip pcntl opcache amqp
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
