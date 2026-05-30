@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.5.0] — 2026-05-30
+
+### Added
+
+#### Backend
+- Dashboard charts API — `GetDashboardChartsUseCase`, `DashboardChartsController`, and `DoctrineDashboardChartsRepository` providing daily event counts and quota usage over a rolling 30-day window.
+
+#### Frontend
+- `EventsByDayChart` and `QuotaByDayChart` chart components on the Dashboard page, backed by the new charts API.
+- `chart.tsx` shadcn/ui component added to support Recharts-based visualizations.
+
+### Changed
+
+#### Backend
+- Symfony Messenger transport replaced from Doctrine to RabbitMQ (`config/packages/messenger.yaml`).
+
+#### Frontend
+- shadcn/ui design system components updated to latest versions across all shared UI components (`alert`, `badge`, `button`, `card`, `select`, `sidebar`, `sonner`, and others).
+- Frontend dependencies upgraded.
+
+#### Infrastructure
+- nginx replaced with FrankenPHP as the application web server (`Dockerfile`, `compose.yaml`).
+- SSL configured on localhost via Caddyfile.
+- Queue worker supervisor configuration updated for RabbitMQ.
+
+### Fixed
+
+- npm security vulnerabilities resolved via dependency upgrades.
+
+### Documentation
+
+- GNU General Public License v2 added (`LICENSE`).
+- Contributor Covenant Code of Conduct added (`CODE_OF_CONDUCT.md`).
+- README updated.
+
+---
+
 ## [0.4.1] — 2026-05-15
 
 ### Added
