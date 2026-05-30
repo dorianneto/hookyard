@@ -1,119 +1,135 @@
 name: hookyard
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: hookyard_runner
-    volumes:
-      - .:/app
-      - ./docker/frankenphp:/etc/frankenphp
-      - caddy_data:/data
-      - caddy_config:/config
-    ports:
-      - "8000:80"
-      - "8443:443"
-      - "8443:443/udp"
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file: .env.local
-    container_name: hookyard-app
-    restart: always
-    healthcheck:
-      test: ["CMD", "symfony", "server:status"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    networks:
-        - hookyarddev
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: hookyard_runner
+        volumes:
+            - .:/app
+            - ./docker/frankenphp:/etc/frankenphp
+            - caddy_data:/data
+            - caddy_config:/config
+        ports:
+            - "8000:80"
+            - "8443:443"
+            - "8443:443/udp"
+        depends_on:
+            db:
+                condition: service_healthy
+            queue:
+                condition: service_healthy
+        env_file: .env.local
+        container_name: hookyard-app
+        restart: always
+        healthcheck:
+            test: ["CMD", "symfony", "server:status"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
+        networks:
+            - hookyarddev
 
-  db:
-    image: postgres:17
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-portobello}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-    healthcheck:
-      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-portobello}", "-U", "${POSTGRES_USER:-app}"]
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    volumes:
-      - database_data:/var/lib/postgresql/data:rw
-    ports:
-      - "5432:5432"
-    restart: always
-    container_name: hookyard-db
-    networks:
-        - hookyarddev
+    db:
+        image: postgres:17
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB:-portobello}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+            POSTGRES_USER: ${POSTGRES_USER:-app}
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "pg_isready",
+                    "-d",
+                    "${POSTGRES_DB:-portobello}",
+                    "-U",
+                    "${POSTGRES_USER:-app}",
+                ]
+            timeout: 5s
+            retries: 5
+            start_period: 60s
+        volumes:
+            - database_data:/var/lib/postgresql/data:rw
+        ports:
+            - "5432:5432"
+        restart: always
+        container_name: hookyard-db
+        networks:
+            - hookyarddev
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: hookyard_node
-    working_dir: /app/frontend
-    volumes:
-      - .:/app
-    command: npm run watch
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=1000
-    networks:
-      - hookyarddev
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: hookyard_node
+        working_dir: /app/frontend
+        volumes:
+            - .:/app
+        command: npm run watch
+        environment:
+            - CHOKIDAR_USEPOLLING=true
+            - CHOKIDAR_INTERVAL=1000
+        networks:
+            - hookyarddev
 
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: hookyard_runner
-    volumes:
-      - .:/app
-    command: supervisord -c /etc/supervisor/supervisord.conf
-    ports:
-      - "9001:9001"
-    depends_on:
-      app:
-        condition: service_healthy
-      db:
-        condition: service_healthy
-      queue:
-        condition: service_healthy
-    env_file: .env.local
-    restart: always
-    container_name: hookyard-worker
-    networks:
-        - hookyarddev
+    worker:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: hookyard_runner
+        volumes:
+            - .:/app
+        command: supervisord -c /etc/supervisor/supervisord.conf
+        ports:
+            - "9001:9001"
+        depends_on:
+            app:
+                condition: service_healthy
+            db:
+                condition: service_healthy
+            queue:
+                condition: service_healthy
+        env_file: .env.local
+        healthcheck:
+            test: ["CMD-SHELL", "supervisorctl status | grep -v RUNNING | grep -q . && exit 1 || exit 0"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 15s
+        restart: always
+        container_name: hookyard-worker
+        networks:
+            - hookyarddev
 
-  queue:
-    image: rabbitmq:4-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    restart: always
-    container_name: hookyard-queue
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-        - hookyarddev
-
+    queue:
+        image: rabbitmq:4-management
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        restart: always
+        container_name: hookyard-queue
+        environment:
+            RABBITMQ_DEFAULT_USER: hookyard
+            RABBITMQ_DEFAULT_PASS: secret
+            RABBITMQ_DEFAULT_VHOST: hookyard
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+        networks:
+            - hookyarddev
 
 volumes:
-  database_data:
-  rabbitmq_data:
-  caddy_data:
-  caddy_config:
+    database_data:
+    rabbitmq_data:
+    caddy_data:
+    caddy_config:
 
 networks:
-  hookyarddev:
-    name: hookyarddev
+    hookyarddev:
+        name: hookyarddev
