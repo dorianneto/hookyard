@@ -23,6 +23,9 @@ class Plan
     #[ORM\Column(name: 'monthly_request_limit', type: Types::INTEGER)]
     private int $monthlyRequestLimit;
 
+    #[ORM\Column(name: 'stripe_price_id', type: Types::STRING, nullable: true)]
+    private ?string $stripePriceId = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -31,11 +34,13 @@ class Plan
         string $name,
         int $monthlyRequestLimit,
         \DateTimeImmutable $createdAt,
+        ?string $stripePriceId = null,
     ) {
         $this->id = $id;
         $this->name = $name;
         $this->monthlyRequestLimit = $monthlyRequestLimit;
         $this->createdAt = $createdAt;
+        $this->stripePriceId = $stripePriceId;
     }
 
     public function getId(): string
@@ -49,6 +54,7 @@ class Plan
             $this->id,
             $this->name,
             $this->monthlyRequestLimit,
+            $this->stripePriceId,
             $this->createdAt,
         );
     }

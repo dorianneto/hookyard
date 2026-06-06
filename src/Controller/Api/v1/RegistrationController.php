@@ -6,6 +6,8 @@ namespace App\Controller\Api\v1;
 
 use App\Application\UseCase\RegisterUserUseCase;
 use App\Domain\Exception\EmailAlreadyTakenException;
+use App\Domain\Exception\PlanNotFoundException;
+use App\Domain\Exception\PlanNotConfiguredException;
 use App\Entity\User as UserEntity;
 use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
@@ -46,9 +48,10 @@ final class RegistrationController
             return new JsonResponse(['error' => 'Invalid JSON.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $email    = $data['email']    ?? '';
+        $email  = $data['email']   ?? '';
         $password = $data['password'] ?? '';
-        $name     = $data['name']     ?? null;
+        $planId = $data['plan_id'] ?? '';
+        $name   = $data['name']    ?? null;
 
         $violations = $this->validator->validate($email, [
             new Assert\NotBlank(message: 'Email is required.'),
@@ -85,12 +88,63 @@ final class RegistrationController
             );
         }
 
+        $violations = $this->validator->validate($planId, [
+            new Assert\NotBlank(message: 'plan_id is required.'),
+        ]);
+
+        if (\count($violations) > 0) {
+            $this->logger->warning('Validation failure', [
+                'request_id' => $requestId,
+                'route'      => $route,
+                'violations' => [(string) $violations[0]->getMessage()],
+            ]);
+
+            return new JsonResponse(
+                ['error' => $violations[0]->getMessage()],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         $id       = Uuid::v7()->toRfc4122();
         $tempUser = new UserEntity($id, $email, '', new \DateTimeImmutable());
         $passwordHash = $this->passwordHasher->hashPassword($tempUser, $password);
 
+        $successUrl = $request->getSchemeAndHttpHost() . '/register/success';
+        $cancelUrl  = $request->getSchemeAndHttpHost() . '/register/cancel';
+
         try {
-            $this->registerUserUseCase->execute($requestId, $id, $email, $passwordHash, $name);
+            $checkoutUrl = $this->registerUserUseCase->execute(
+                requestId:    $requestId,
+                id:           $id,
+                email:        $email,
+                passwordHash: $passwordHash,
+                planId:       $planId,
+                successUrl:   $successUrl,
+                cancelUrl:    $cancelUrl,
+                name:         $name,
+            );
+        } catch (PlanNotFoundException $e) {
+            $this->logger->info('Registration plan not found', [
+                'request_id'      => $requestId,
+                'route'           => $route,
+                'exception_class' => $e::class,
+            ]);
+
+            return new JsonResponse(
+                ['error' => 'Plan not found.'],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        } catch (PlanNotConfiguredException $e) {
+            $this->logger->error('Registration plan not configured for payment', [
+                'request_id'      => $requestId,
+                'route'           => $route,
+                'exception_class' => $e::class,
+            ]);
+
+            return new JsonResponse(
+                ['error' => 'Selected plan is not available for payment.'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         } catch (EmailAlreadyTakenException $e) {
             $this->logger->info('Registration email already taken', [
                 'request_id'      => $requestId,
@@ -107,9 +161,9 @@ final class RegistrationController
         $this->logger->info('Response dispatched', [
             'request_id'  => $requestId,
             'route'       => $route,
-            'http_status' => Response::HTTP_CREATED,
+            'http_status' => Response::HTTP_OK,
         ]);
 
-        return new JsonResponse(null, Response::HTTP_CREATED);
+        return new JsonResponse(['checkout_url' => $checkoutUrl]);
     }
 }

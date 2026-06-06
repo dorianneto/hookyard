@@ -5,6 +5,7 @@ export interface User {
   id: string
   email: string
   name: string | null
+  status: 'pending_payment' | 'active'
 }
 
 interface AuthContextValue {

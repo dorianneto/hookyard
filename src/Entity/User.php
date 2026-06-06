@@ -37,6 +37,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     #[ORM\JoinColumn(name: 'plan_id', referencedColumnName: 'id', nullable: true)]
     private ?Plan $plan = null;
 
+    #[ORM\Column(name: 'stripe_customer_id', type: Types::STRING, nullable: true)]
+    private ?string $stripeCustomerId = null;
+
+    #[ORM\Column(name: 'status', type: Types::STRING, length: 50, options: ['default' => 'pending_payment'])]
+    private string $status = 'pending_payment';
+
     public function __construct(
         string $id,
         string $email,
@@ -81,6 +87,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function setPlan(?Plan $plan): void
     {
         $this->plan = $plan;
+    }
+
+    public function getStripeCustomerId(): ?string
+    {
+        return $this->stripeCustomerId;
+    }
+
+    public function setStripeCustomerId(?string $stripeCustomerId): void
+    {
+        $this->stripeCustomerId = $stripeCustomerId;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): void
+    {
+        $this->status = $status;
     }
 
     // --- UserInterface ---
@@ -128,7 +154,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     public static function fromDomain(DomainUser $user, ?Plan $plan = null): self
     {
-        return new self(
+        $entity = new self(
             $user->getId(),
             $user->getEmail(),
             $user->getPasswordHash(),
@@ -136,6 +162,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
             $user->getName(),
             $plan,
         );
+        $entity->stripeCustomerId = $user->getStripeCustomerId();
+        $entity->status           = $user->getStatus();
+
+        return $entity;
     }
 
     public function toDomain(): DomainUser
@@ -147,6 +177,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
             $this->createdAt,
             $this->name,
             $this->plan?->getId(),
+            $this->stripeCustomerId,
+            $this->status,
         );
     }
 }

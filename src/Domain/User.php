@@ -13,6 +13,8 @@ class User
         private \DateTimeImmutable $createdAt,
         private ?string $name = null,
         private ?string $planId = null,
+        private ?string $stripeCustomerId = null,
+        private string $status = 'pending_payment',
     ) {}
 
     public function getId(): string
@@ -43,5 +45,15 @@ class User
     public function getPlanId(): ?string
     {
         return $this->planId;
+    }
+
+    public function getStripeCustomerId(): ?string
+    {
+        return $this->stripeCustomerId;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
     }
 }

@@ -29,4 +29,19 @@ final class DoctrinePlanRepository implements PlanRepositoryPort
 
         return $entity?->toDomain();
     }
+
+    public function findById(string $id): ?DomainPlan
+    {
+        $entity = $this->entityManager->find(PlanEntity::class, $id);
+
+        return $entity?->toDomain();
+    }
+
+    public function findAll(): array
+    {
+        return array_map(
+            fn(PlanEntity $e) => $e->toDomain(),
+            $this->entityManager->getRepository(PlanEntity::class)->findAll(),
+        );
+    }
 }

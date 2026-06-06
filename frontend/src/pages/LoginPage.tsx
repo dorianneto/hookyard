@@ -32,7 +32,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigate("/");
+      const stored = localStorage.getItem('waas_user');
+      const user = stored ? JSON.parse(stored) : null;
+      navigate(user?.status === 'pending_payment' ? '/register/pending' : '/');
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
     } finally {

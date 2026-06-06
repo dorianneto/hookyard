@@ -10,6 +10,7 @@ class Plan
         private string $id,
         private string $name,
         private int $monthlyRequestLimit,
+        private ?string $stripePriceId,
         private \DateTimeImmutable $createdAt,
     ) {}
 
@@ -26,6 +27,11 @@ class Plan
     public function getMonthlyRequestLimit(): int
     {
         return $this->monthlyRequestLimit;
+    }
+
+    public function getStripePriceId(): ?string
+    {
+        return $this->stripePriceId;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

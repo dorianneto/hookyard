@@ -22,9 +22,10 @@ final class AuthenticationSuccessHandler implements AuthenticationSuccessHandler
         }
 
         return new JsonResponse([
-            'id'    => $user->getId(),
-            'email' => $user->getUserIdentifier(),
-            'name'  => $user->getName() ?? null,
+            'id'     => $user->getId(),
+            'email'  => $user->getUserIdentifier(),
+            'name'   => $user->getName() ?? null,
+            'status' => $user->getStatus(),
         ], Response::HTTP_OK);
     }
 }

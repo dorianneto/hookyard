@@ -81,7 +81,7 @@ final class IngestEventUseCaseTest extends TestCase
     public function testNoActiveEndpointsStillSavesEvent(): void
     {
         $source = new Source('source-id', 'user-id', 'My Source', 'inbound-uuid', new \DateTimeImmutable());
-        $plan   = new Plan('plan_free', 'free', 10000, new \DateTimeImmutable());
+        $plan   = new Plan('plan_free', 'free', 10000, null, new \DateTimeImmutable());
 
         $this->sourceRepository->method('findByInboundUuid')->willReturn($source);
         $this->planRepository->method('findByUserId')->willReturn($plan);
@@ -99,7 +99,7 @@ final class IngestEventUseCaseTest extends TestCase
     public function testMultipleEndpointsEnqueuesAll(): void
     {
         $source = new Source('source-id', 'user-id', 'My Source', 'inbound-uuid', new \DateTimeImmutable());
-        $plan   = new Plan('plan_free', 'free', 10000, new \DateTimeImmutable());
+        $plan   = new Plan('plan_free', 'free', 10000, null, new \DateTimeImmutable());
 
         $endpoints = [
             new Endpoint('endpoint-1', 'source-id', 'https://example.com/a', new \DateTimeImmutable()),
@@ -128,7 +128,7 @@ final class IngestEventUseCaseTest extends TestCase
     public function testEventIsSavedWithCorrectData(): void
     {
         $source = new Source('source-id', 'user-id', 'My Source', 'inbound-uuid', new \DateTimeImmutable());
-        $plan   = new Plan('plan_free', 'free', 10000, new \DateTimeImmutable());
+        $plan   = new Plan('plan_free', 'free', 10000, null, new \DateTimeImmutable());
 
         $this->sourceRepository->method('findByInboundUuid')->willReturn($source);
         $this->planRepository->method('findByUserId')->willReturn($plan);
@@ -168,7 +168,7 @@ final class IngestEventUseCaseTest extends TestCase
     public function testQuotaAtLimitThrowsQuotaExceededException(): void
     {
         $source = new Source('source-id', 'user-id', 'My Source', 'inbound-uuid', new \DateTimeImmutable());
-        $plan   = new Plan('plan_free', 'free', 10000, new \DateTimeImmutable());
+        $plan   = new Plan('plan_free', 'free', 10000, null, new \DateTimeImmutable());
 
         $this->sourceRepository->method('findByInboundUuid')->willReturn($source);
         $this->planRepository->method('findByUserId')->willReturn($plan);
@@ -186,7 +186,7 @@ final class IngestEventUseCaseTest extends TestCase
     public function testUnderQuotaEventPersistedAndDispatcherCalled(): void
     {
         $source = new Source('source-id', 'user-id', 'My Source', 'inbound-uuid', new \DateTimeImmutable());
-        $plan   = new Plan('plan_free', 'free', 10000, new \DateTimeImmutable());
+        $plan   = new Plan('plan_free', 'free', 10000, null, new \DateTimeImmutable());
 
         $this->sourceRepository->method('findByInboundUuid')->willReturn($source);
         $this->planRepository->method('findByUserId')->willReturn($plan);

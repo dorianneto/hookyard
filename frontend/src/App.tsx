@@ -4,6 +4,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import StripeSuccessPage from "./pages/StripeSuccessPage";
+import StripeCancelPage from "./pages/StripeCancelPage";
+import RegisterPendingPage from "./pages/RegisterPendingPage";
 import DashboardPage from "./pages/DashboardPage";
 import SourcesPage from "./pages/SourcesPage";
 import NewSourcePage from "./pages/NewSourcePage";
@@ -21,6 +24,9 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register/success" element={<StripeSuccessPage />} />
+          <Route path="/register/cancel" element={<StripeCancelPage />} />
+          <Route path="/register/pending" element={<RegisterPendingPage />} />
           <Route
             path="/"
             element={

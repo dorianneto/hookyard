@@ -13,5 +13,9 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace />
   }
 
+  if (user.status === 'pending_payment') {
+    return <Navigate to="/register/pending" replace />
+  }
+
   return <>{children}</>
 }
