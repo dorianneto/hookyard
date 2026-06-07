@@ -1,3 +1,8 @@
+parameters:
+    app.stripe.developer_price_id: '%env(STRIPE_DEVELOPER_PRICE_ID)%'
+    app.stripe.startup_price_id: '%env(STRIPE_STARTUP_PRICE_ID)%'
+    app.stripe.pro_price_id: '%env(STRIPE_PRO_PRICE_ID)%'
+
 services:
     stripe.client:
         class: 'Stripe\StripeClient'

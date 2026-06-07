@@ -19,14 +19,35 @@ class Plan
         return $this->id;
     }
 
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
     public function getName(): string
     {
         return $this->name;
     }
 
+    public function setMonthlyRequestLimit(int $monthlyRequestLimit): self
+    {
+        $this->monthlyRequestLimit = $monthlyRequestLimit;
+
+        return $this;
+    }
+
     public function getMonthlyRequestLimit(): int
     {
         return $this->monthlyRequestLimit;
+    }
+
+    public function setStripePriceId(string $stripePriceId): self
+    {
+        $this->stripePriceId = $stripePriceId;
+
+        return $this;
     }
 
     public function getStripePriceId(): ?string

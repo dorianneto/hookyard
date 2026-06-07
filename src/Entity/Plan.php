@@ -48,6 +48,24 @@ class Plan
         return $this->id;
     }
 
+    public static function fromDomain(DomainPlan $plan): self
+    {
+        return new self(
+            $plan->getId(),
+            $plan->getName(),
+            $plan->getMonthlyRequestLimit(),
+            $plan->getCreatedAt(),
+            $plan->getStripePriceId(),
+        );
+    }
+
+    public function updateFromDomain(DomainPlan $plan): void
+    {
+        $this->name = $plan->getName();
+        $this->monthlyRequestLimit = $plan->getMonthlyRequestLimit();
+        $this->stripePriceId = $plan->getStripePriceId();
+    }
+
     public function toDomain(): DomainPlan
     {
         return new DomainPlan(

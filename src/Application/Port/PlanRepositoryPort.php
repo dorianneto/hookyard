@@ -14,4 +14,15 @@ interface PlanRepositoryPort
 
     /** @return Plan[] */
     public function findAll(): array;
+
+    /**
+     * @param Plan[] $plans
+     */
+    public function bulkRemove(array $plans): void;
+
+    /**
+     * @param Plan[] $plans
+     */
+    public function bulkSave(array $plans): void;
+
 }
