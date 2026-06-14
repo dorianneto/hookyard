@@ -28,4 +28,4 @@ services:
 
     App\Controller\Api\v1\Stripe\WebhookController:
         arguments:
-            $webhookSecret: '%env(STRIPE_SECRET_KEY)%'
+            $webhookSecret: '%env(STRIPE_WEBHOOK_SECRET)%'
