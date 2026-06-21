@@ -79,11 +79,12 @@ final class ChangePlanUseCase
         }
 
         $checkoutUrl = $this->stripeService->createCheckoutSession(
-            stripePriceId: $plan->getStripePriceId(),
-            userId:        $userId,
-            planId:        $planId,
-            successUrl:    $successUrl,
-            cancelUrl:     $cancelUrl,
+            stripePriceId:    $plan->getStripePriceId(),
+            userId:           $userId,
+            planId:           $planId,
+            successUrl:       $successUrl,
+            cancelUrl:        $cancelUrl,
+            stripeCustomerId: $user?->getStripeCustomerId(),
         );
 
         $this->logger->info('Change plan — checkout session created', [

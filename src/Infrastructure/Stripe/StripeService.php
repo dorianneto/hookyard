@@ -22,14 +22,21 @@ final class StripeService implements StripeServicePort
         string $planId,
         string $successUrl,
         string $cancelUrl,
+        ?string $stripeCustomerId = null,
     ): string {
-        $session = $this->client->checkout->sessions->create([
+        $params = [
             'mode'        => 'subscription',
             'line_items'  => [['price' => $stripePriceId, 'quantity' => 1]],
             'metadata'    => ['user_id' => $userId, 'plan_id' => $planId],
             'success_url' => $successUrl,
             'cancel_url'  => $cancelUrl,
-        ]);
+        ];
+
+        if (null !== $stripeCustomerId) {
+            $params['customer'] = $stripeCustomerId;
+        }
+
+        $session = $this->client->checkout->sessions->create($params);
 
         return $session->url;
     }

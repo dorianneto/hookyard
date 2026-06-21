@@ -12,6 +12,7 @@ interface StripeServicePort
         string $planId,
         string $successUrl,
         string $cancelUrl,
+        ?string $stripeCustomerId = null,
     ): string;
 
     public function cancelSubscription(string $subscriptionId): void;
