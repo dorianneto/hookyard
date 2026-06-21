@@ -167,99 +167,90 @@ export default function SubscriptionPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {isCancelled ? (
+      {isCancelled && (
+        <Alert>
+          <AlertDescription>
+            Your subscription has been cancelled. Select a plan below to reactivate your account.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {subscription?.current_plan && (
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Subscription Cancelled</CardTitle>
+            <CardTitle>Current Plan</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">{subscription.current_plan.name}</span>
+              <Badge variant="default">Active</Badge>
+            </div>
             <p className="text-muted-foreground text-sm">
-              Your subscription has been cancelled. You no longer have access to a plan.
-              To resume service, please register again.
+              {subscription.current_plan.monthly_request_limit.toLocaleString()} requests / month
             </p>
-            <Button asChild variant="outline">
-              <Link to="/register">Start a new plan</Link>
-            </Button>
           </CardContent>
         </Card>
-      ) : (
-        <>
-          {subscription?.current_plan && (
-            <Card className="max-w-md">
-              <CardHeader>
-                <CardTitle>Current Plan</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">{subscription.current_plan.name}</span>
-                  <Badge variant="default">Active</Badge>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  {subscription.current_plan.monthly_request_limit.toLocaleString()} requests / month
-                </p>
-              </CardContent>
-            </Card>
-          )}
+      )}
 
-          <div className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Available Plans
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {subscription?.available_plans.map((plan) => {
-                const isCurrent = plan.id === subscription.current_plan?.id
-                return (
-                  <Card key={plan.id} className={isCurrent ? 'border-primary' : ''}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between text-base">
-                        {plan.name}
-                        {isCurrent && <Badge variant="default">Current</Badge>}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-muted-foreground text-sm">
-                        {plan.monthly_request_limit.toLocaleString()} requests / month
-                      </p>
-                      <Button
-                        className="w-full"
-                        variant={isCurrent ? 'secondary' : 'default'}
-                        disabled={isCurrent || switching !== null}
-                        onClick={() => handleSwitch(plan.id)}
-                      >
-                        {switching === plan.id ? 'Redirecting…' : isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          </div>
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Available Plans
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {subscription?.available_plans.map((plan) => {
+            const isCurrent = plan.id === subscription.current_plan?.id
+            return (
+              <Card key={plan.id} className={isCurrent ? 'border-primary' : ''}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    {plan.name}
+                    {isCurrent && <Badge variant="default">Current</Badge>}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-muted-foreground text-sm">
+                    {plan.monthly_request_limit.toLocaleString()} requests / month
+                  </p>
+                  <Button
+                    className="w-full"
+                    variant={isCurrent ? 'secondary' : 'default'}
+                    disabled={isCurrent || switching !== null}
+                    onClick={() => handleSwitch(plan.id)}
+                  >
+                    {switching === plan.id ? 'Redirecting…' : isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      </div>
 
-          <div className="pt-4 border-t">
-            <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="destructive">Cancel Subscription</Button>
-              </DialogTrigger>
-              <DialogContent showCloseButton={false}>
-                <DialogHeader>
-                  <DialogTitle>Cancel Subscription</DialogTitle>
-                  <DialogDescription>
-                    This will immediately cancel your subscription. You will lose access to your current plan.
-                    This action cannot be undone.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>
-                    Keep Subscription
-                  </Button>
-                  <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
-                    {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </>
+      {!isCancelled && (
+        <div className="pt-4 border-t">
+          <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="destructive">Cancel Subscription</Button>
+            </DialogTrigger>
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>Cancel Subscription</DialogTitle>
+                <DialogDescription>
+                  This will immediately cancel your subscription. You will lose access to your current plan.
+                  This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>
+                  Keep Subscription
+                </Button>
+                <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
+                  {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       )}
     </div>
   )
