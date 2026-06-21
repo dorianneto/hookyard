@@ -13,4 +13,6 @@ interface StripeServicePort
         string $successUrl,
         string $cancelUrl,
     ): string;
+
+    public function cancelSubscription(string $subscriptionId): void;
 }

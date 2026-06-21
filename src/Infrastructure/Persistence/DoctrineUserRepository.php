@@ -30,10 +30,13 @@ final class DoctrineUserRepository implements UserRepositoryPort
             $existing->setName($user->getName());
             $existing->setPasswordHash($user->getPasswordHash());
             $existing->setStripeCustomerId($user->getStripeCustomerId());
+            $existing->setStripeSubscriptionId($user->getStripeSubscriptionId());
             $existing->setStatus($user->getStatus());
 
             if ($user->getPlanId() !== null) {
                 $existing->setPlan($this->entityManager->getReference(PlanEntity::class, $user->getPlanId()));
+            } else {
+                $existing->setPlan(null);
             }
         } else {
             $plan = $user->getPlanId() !== null

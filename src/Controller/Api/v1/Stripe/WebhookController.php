@@ -45,9 +45,11 @@ final class WebhookController
         $session = $event->data->object;
 
         $this->handleWebhookUseCase->execute(
-            requestId:        $requestId,
-            userId:           $session->metadata->user_id,
-            stripeCustomerId: $session->customer,
+            requestId:            $requestId,
+            userId:               $session->metadata->user_id,
+            planId:               $session->metadata->plan_id,
+            stripeCustomerId:     $session->customer,
+            stripeSubscriptionId: $session->subscription,
         );
 
         $this->logger->info('Response dispatched', [

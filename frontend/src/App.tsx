@@ -16,6 +16,7 @@ import EventDetailPage from "./pages/EventDetailPage";
 import AccountPage from "./pages/AccountPage";
 import LogsPage from "./pages/LogsPage";
 import AuditPage from "./pages/AuditPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 
 function App() {
   return (
@@ -113,6 +114,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <AuditPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/subscription"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SubscriptionPage />
                 </Layout>
               </ProtectedRoute>
             }

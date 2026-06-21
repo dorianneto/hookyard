@@ -43,6 +43,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     #[ORM\Column(name: 'status', type: Types::STRING, length: 50, options: ['default' => 'pending_payment'])]
     private string $status = 'pending_payment';
 
+    #[ORM\Column(name: 'stripe_subscription_id', type: Types::STRING, length: 255, nullable: true)]
+    private ?string $stripeSubscriptionId = null;
+
     public function __construct(
         string $id,
         string $email,
@@ -97,6 +100,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function setStripeCustomerId(?string $stripeCustomerId): void
     {
         $this->stripeCustomerId = $stripeCustomerId;
+    }
+
+    public function getStripeSubscriptionId(): ?string
+    {
+        return $this->stripeSubscriptionId;
+    }
+
+    public function setStripeSubscriptionId(?string $stripeSubscriptionId): void
+    {
+        $this->stripeSubscriptionId = $stripeSubscriptionId;
     }
 
     public function getStatus(): string
@@ -162,8 +175,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
             $user->getName(),
             $plan,
         );
-        $entity->stripeCustomerId = $user->getStripeCustomerId();
-        $entity->status           = $user->getStatus();
+        $entity->stripeCustomerId      = $user->getStripeCustomerId();
+        $entity->stripeSubscriptionId  = $user->getStripeSubscriptionId();
+        $entity->status                = $user->getStatus();
 
         return $entity;
     }
@@ -179,6 +193,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
             $this->plan?->getId(),
             $this->stripeCustomerId,
             $this->status,
+            $this->stripeSubscriptionId,
         );
     }
 }

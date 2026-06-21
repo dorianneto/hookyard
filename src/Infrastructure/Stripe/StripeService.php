@@ -33,4 +33,9 @@ final class StripeService implements StripeServicePort
 
         return $session->url;
     }
+
+    public function cancelSubscription(string $subscriptionId): void
+    {
+        $this->client->subscriptions->cancel($subscriptionId);
+    }
 }

@@ -1,5 +1,6 @@
 import {
   IconClipboardList,
+  IconCreditCard,
   IconDotsVertical,
   IconLogout,
   IconUserCircle,
@@ -68,6 +69,12 @@ export function NavUser({
                 <Link to="/account">
                   <IconUserCircle />
                   Account
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/subscription">
+                  <IconCreditCard />
+                  Subscription
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

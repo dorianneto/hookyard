@@ -15,6 +15,7 @@ class User
         private ?string $planId = null,
         private ?string $stripeCustomerId = null,
         private string $status = 'pending_payment',
+        private ?string $stripeSubscriptionId = null,
     ) {}
 
     public function getId(): string
@@ -55,5 +56,10 @@ class User
     public function getStatus(): string
     {
         return $this->status;
+    }
+
+    public function getStripeSubscriptionId(): ?string
+    {
+        return $this->stripeSubscriptionId;
     }
 }

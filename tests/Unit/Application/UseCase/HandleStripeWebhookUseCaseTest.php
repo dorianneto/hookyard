@@ -45,10 +45,12 @@ final class HandleStripeWebhookUseCaseTest extends TestCase
             ->method('save')
             ->with($this->callback(function (User $saved): bool {
                 return $saved->getStatus() === 'active'
-                    && $saved->getStripeCustomerId() === 'cus_test123';
+                    && $saved->getStripeCustomerId() === 'cus_test123'
+                    && $saved->getPlanId() === 'plan-id'
+                    && $saved->getStripeSubscriptionId() === 'sub_abc123';
             }));
 
-        $this->useCase->execute('request-id', 'user-id', 'cus_test123');
+        $this->useCase->execute('request-id', 'user-id', 'plan-id', 'cus_test123', 'sub_abc123');
     }
 
     #[AllowMockObjectsWithoutExpectations]
@@ -63,6 +65,6 @@ final class HandleStripeWebhookUseCaseTest extends TestCase
             ->expects($this->never())
             ->method('save');
 
-        $this->useCase->execute('request-id', 'missing-user-id', 'cus_test123');
+        $this->useCase->execute('request-id', 'missing-user-id', 'plan-id', 'cus_test123', null);
     }
 }
