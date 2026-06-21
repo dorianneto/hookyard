@@ -99,6 +99,7 @@ final class RegistrationUseCaseTest extends TestCase
         $this->assertSame('https://checkout.stripe.com/retry', $url);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testSavesNewUserWithPendingStatusOnSuccess(): void
     {
         $this->planRepository->method('findById')->willReturn($this->plan);
@@ -118,6 +119,7 @@ final class RegistrationUseCaseTest extends TestCase
         $this->executeWithPlan('plan-id', 'new@example.com', 'test-id');
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testReturnsCheckoutUrlOnSuccess(): void
     {
         $this->planRepository->method('findById')->willReturn($this->plan);

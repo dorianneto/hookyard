@@ -130,7 +130,7 @@ final class ChangePlanUseCaseTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function testPassesExistingCustomerIdToCheckoutSession(): void
     {
-        $user = $this->makeUser(planId: 'plan_startup', stripeCustomerId: 'cus_test');
+        $user = $this->makeUser(planId: 'plan_startup');
         $plan = new Plan('plan_pro', 'Pro', 100000, 'price_pro', new \DateTimeImmutable());
 
         $this->userRepository->method('findById')->willReturn($user);

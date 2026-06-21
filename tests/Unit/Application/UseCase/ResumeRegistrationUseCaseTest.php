@@ -12,6 +12,7 @@ use App\Domain\Exception\AccountAlreadyActiveException;
 use App\Domain\Exception\PlanNotConfiguredException;
 use App\Domain\Plan;
 use App\Domain\User;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -36,6 +37,7 @@ final class ResumeRegistrationUseCaseTest extends TestCase
         );
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testExecuteReturnsCheckoutUrlForPendingUser(): void
     {
         $user = new User('user-id', 'u@example.com', 'hash', new \DateTimeImmutable(), planId: 'plan-id', status: 'pending_payment');
@@ -50,6 +52,7 @@ final class ResumeRegistrationUseCaseTest extends TestCase
         $this->assertSame('https://checkout.stripe.com/pay/cs_test', $url);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testExecuteThrowsWhenUserIsAlreadyActive(): void
     {
         $user = new User('user-id', 'u@example.com', 'hash', new \DateTimeImmutable(), status: 'active');
@@ -60,6 +63,7 @@ final class ResumeRegistrationUseCaseTest extends TestCase
         $this->useCase->execute('request-id', 'user-id', 'https://app/success', 'https://app/cancel');
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testExecuteThrowsWhenPlanHasNoStripePriceId(): void
     {
         $user = new User('user-id', 'u@example.com', 'hash', new \DateTimeImmutable(), planId: 'plan-id', status: 'pending_payment');

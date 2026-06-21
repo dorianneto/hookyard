@@ -51,7 +51,7 @@ final class GetSubscriptionUseCaseTest extends TestCase
             status:  'active',
         );
 
-        $this->userRepository->method('findById')->with('user-id')->willReturn($user);
+        $this->userRepository->method('findById')->willReturn($user);
         $this->planRepository->method('findAll')->willReturn([$this->developer, $this->startup, $this->pro]);
 
         $result = $this->useCase->execute('request-id', 'user-id');
