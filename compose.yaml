@@ -93,7 +93,7 @@ services:
                 condition: service_healthy
         env_file: .env.local
         healthcheck:
-            test: ["CMD-SHELL", "supervisorctl status | grep -v RUNNING | grep -q . && exit 1 || exit 0"]
+            test: ["CMD-SHELL", "supervisorctl -s http://localhost:9001 status | grep -v RUNNING | grep -q . && exit 1 || exit 0"]
             interval: 10s
             timeout: 5s
             retries: 3
@@ -113,7 +113,6 @@ services:
         environment:
             RABBITMQ_DEFAULT_USER: hookyard
             RABBITMQ_DEFAULT_PASS: secret
-            RABBITMQ_DEFAULT_VHOST: hookyard
         volumes:
             - rabbitmq_data:/var/lib/rabbitmq
         healthcheck:
