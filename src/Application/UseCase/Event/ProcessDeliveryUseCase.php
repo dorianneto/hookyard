@@ -62,11 +62,11 @@ final class ProcessDeliveryUseCase
 
         if ($result->statusCode === null) {
             $this->logger->warning('Delivery transport exception', [
-                'request_id'       => $message->requestId,
-                'event_id'         => $message->eventId,
-                'endpoint_id'      => $message->endpointId,
-                'attempt_number'   => $message->attemptNumber,
-                'exception_message' => 'No response received (transport error)',
+                'request_id'        => $message->requestId,
+                'event_id'          => $message->eventId,
+                'endpoint_id'       => $message->endpointId,
+                'attempt_number'    => $message->attemptNumber,
+                'exception_message' => $result->exception?->getMessage() ?? 'Unknown exception',
             ]);
         } elseif ($result->success) {
             $this->logger->info('Delivery HTTP succeeded', [

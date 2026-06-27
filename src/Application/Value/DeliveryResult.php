@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Value;
 
+use Throwable;
+
 final readonly class DeliveryResult
 {
     public function __construct(
@@ -11,5 +13,6 @@ final readonly class DeliveryResult
         public string $responseBody,
         public int $durationMs,
         public bool $success,
+        public Throwable|null $exception = null,
     ) {}
 }

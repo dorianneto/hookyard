@@ -27,9 +27,14 @@ final class IngestEventController
     public function __invoke(Request $request, string $uuid): JsonResponse
     {
         $eventId   = Uuid::v7()->toRfc4122();
-        $body      = $request->getContent();
-        $headers   = $request->headers->all();
-        $method    = $request->getMethod();
+        $body    = $request->getContent();
+        $method  = $request->getMethod();
+        $headers = $request->headers->all();
+
+        foreach (['host', 'connection', 'keep-alive', 'transfer-encoding', 'te', 'trailer', 'upgrade', 'proxy-authorization', 'proxy-authenticate', 'content-length'] as $h) {
+            unset($headers[$h]);
+        }
+
         $requestId = $request->attributes->get('request_id');
 
         $this->logger->info('Ingest request received', [

@@ -20,7 +20,7 @@ final class SymfonyHttpDeliveryAdapter implements HttpDeliveryPort
         $start = hrtime(true);
 
         try {
-            $response   = $this->client->request('POST', $url, [
+            $response = $this->client->request('POST', $url, [
                 'headers' => $headers,
                 'body'    => $body,
                 'timeout' => $timeoutSeconds,
@@ -32,10 +32,10 @@ final class SymfonyHttpDeliveryAdapter implements HttpDeliveryPort
             $success      = $statusCode >= 200 && $statusCode < 300;
 
             return new DeliveryResult($statusCode, $responseBody, $durationMs, $success);
-        } catch (TransportExceptionInterface) {
+        } catch (TransportExceptionInterface $e) {
             $durationMs = (int) ((hrtime(true) - $start) / 1_000_000);
 
-            return new DeliveryResult(null, '', $durationMs, false);
+            return new DeliveryResult(null, '', $durationMs, false, $e);
         }
     }
 }
