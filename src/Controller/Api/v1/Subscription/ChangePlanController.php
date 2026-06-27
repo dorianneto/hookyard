@@ -11,6 +11,7 @@ use App\Domain\Exception\PlanNotConfiguredException;
 use App\Entity\User;
 use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
+use Stripe\Exception\ApiErrorException as StripeApiErrorException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -68,6 +69,15 @@ final class ChangePlanController
             return new JsonResponse(['error' => 'plan_not_found'], Response::HTTP_NOT_FOUND);
         } catch (PlanNotConfiguredException) {
             return new JsonResponse(['error' => 'plan_not_configured'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (StripeApiErrorException $e) {
+            $this->logger->error('Stripe API error', [
+                'request_id' => $requestId,
+                'route'      => $route,
+                'method'     => $request->getMethod(),
+                'error'      => $e->getMessage(),
+            ]);
+
+            return new JsonResponse(['error' => 'stripe_api_error'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         $this->logger->info('Response dispatched', [
